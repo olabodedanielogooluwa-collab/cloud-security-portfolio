@@ -17,3 +17,20 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
 - Hops 1 and 3 are private IPs — internal network boundary visible
 - Traffic transitions from private to public at Hop 5
 - Timed out hops indicate firewall presence — useful for network mapping
+
+
+## IPConfig Analysis
+**Command:** `ipconfig /all`
+
+**Findings:**
+- Machine IP: `10.245.181.179` — assigned by DHCP
+- Subnet Mask: `255.255.255.0` — /24 network, 254 usable hosts
+- Default Gateway: `10.245.181.99` — all external traffic routes here
+- DHCP Server: `10.245.181.99` — router handling IP assignment
+- DNS Server: `10.245.181.99` — router also resolving DNS queries
+- Ethernet: disconnected — running on WiFi only
+
+**Security Observations:**
+- Router is acting as gateway, DHCP, and DNS simultaneously
+- Single point of failure — if compromised, attacker controls all three
+- WiFi only — no wired connection, higher interception risk
