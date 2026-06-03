@@ -67,8 +67,10 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
 
 ## claring arp cache
 **command:**  `arp -d*`
+
 **findings:**
 - command prompt must run as admistrator before successful clearing
+  
 **security observation:**
 - non-administrator cmd prompt results in "elevation required" output
-- why: security feature to prevent unauunauthorized ARP table modifications
+- why: security feature to prevent unauunauthorized ARP table modification
