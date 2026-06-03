@@ -74,5 +74,5 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
 **security observation:**
 - non-administrator cmd prompt results in "elevation required" output
 - why: security feature to prevent unauthorized ARP table modification
-- Windows restricts modifocation to admin users only
+- Windows restricts modification to admin users only
   
