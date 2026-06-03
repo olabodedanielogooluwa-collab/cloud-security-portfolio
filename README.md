@@ -64,3 +64,11 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
 - Clean routing table — no suspicious persistent routes
 - Malware can add persistent routes to silently redirect traffic
 - Default route is single point of control — if gateway is compromised, all traffic is exposed
+
+## claring arp cache
+**command:**  `arp -d*`
+**findings:**
+- command prompt must run as admistrator before successful clearing
+**security observation:**
+- non-administrator cmd prompt results in "elevation required" output
+- why: security feature to prevent unauunauthorized ARP table modifications
