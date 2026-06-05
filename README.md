@@ -101,3 +101,42 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
   investigate immediately — traffic could be redirected to an attacker
 - Always verify gateway matches your known router IP after 
   any connectivity issue
+
+## Week 4 — DNS Misconfiguration & Recovery
+**Scenario:** Deliberate DNS misconfiguration causing full network disconnection
+
+**Commands Used:**
+- `nslookup google.com` — verify DNS resolution
+- `ipconfig /all` — confirm DNS server settings
+- `ping 8.8.8.8` — test connectivity independent of DNS
+- `Win + R → ncpa.cpl` — access network adapter settings
+
+**What I Did:**
+1. Navigated to IPv4 settings via `ncpa.cpl`
+2. Manually set DNS server to fake address `10.0.0.x`
+3. Ran `nslookup google.com` — returned 'no response from server'
+4. <img width="1080" height="607" alt="WhatsApp Image 2026-06-05 at 10 57 30 PM" src="https://github.com/user-attachments/assets/647a7668-c33e-41b5-85a7-1ba00c7e425a" />
+
+5. Observed full network disconnection — not just DNS failure
+6. Ran `ipconfig /all` — confirmed wrong DNS server active
+7. Reverted to "Obtain DNS server address automatically"
+8. Ran `nslookup google.com` — resolved successfully
+9. vvv<img width="1080" height="607" alt="WhatsApp Image 2026-06-05 at 11 00 31 PM" src="https://github.com/user-attachments/assets/8dfb8c09-0156-4ace-9e3c-da219fae3e9d" />
+
+10. Ran `ping 8.8.8.8` — confirmed full connectivity restored
+
+**Key Finding:**
+Misconfiguring DNS caused complete network disconnection, not 
+just name resolution failure. This is because the router handles 
+DNS, DHCP, and gateway simultaneously — one misconfiguration 
+disrupts all three services.
+
+**Security Observations:**
+- DNS poisoning or misconfiguration can silently redirect all 
+  web traffic to attacker-controlled servers
+- A single DNS change can take down full network connectivity
+  when router handles multiple roles
+- Always verify DNS server matches known router IP via `ipconfig /all`
+- Use `ping 8.8.8.8` to test connectivity independent of DNS —
+  if ping succeeds but `nslookup` fails, DNS is the problem
+- If ping also fails, issue is gateway or deeper
