@@ -140,3 +140,47 @@ disrupts all three services.
 - Use `ping 8.8.8.8` to test connectivity independent of DNS —
   if ping succeeds but `nslookup` fails, DNS is the problem
 - If ping also fails, issue is gateway or deeper
+
+## Week 4 — Tracert Failure & Recovery
+**Scenario:** Deliberate gateway misconfiguration causing 
+tracert and connectivity failure
+
+**Commands Used:**
+- `tracert google.com` — trace packet path to destination
+- `route print` — diagnose routing table
+- `ping 8.8.8.8` — test connectivity independent of DNS
+
+**What I Did:**
+1. Misconfigured default gateway to fake address `10.254.181.x`
+2. Ran `tracert google.com` — returned `Unable to resolve 
+   target system name` — packets couldn't leave machine
+3. <img width="1080" height="232" alt="WhatsApp Image 2026-06-06 at 11 00 39 PM" src="https://github.com/user-attachments/assets/16b6b0a5-2750-41dd-b461-651303cd1bfc" />
+
+4. Ran `ping 8.8.8.8` — returned `Destination host 
+   unreachable` confirming no connectivity
+5. Ran `route print` — identified fake gateway `10.254.181.x` 
+   in both active and persistent routes
+6. Reverted adapter settings to automatic (DHCP)
+7. Ran `tracert google.com` — successfully traced 23 hops 
+   to Google
+8. <img width="1080" height="522" alt="WhatsApp Image 2026-06-06 at 11 03 34 PM" src="https://github.com/user-attachments/assets/2116a99e-9986-4bef-97ae-44bbdbcaf10a" />
+
+9. Ran `ping 8.8.8.8` — 4/4 packets received, connectivity 
+   fully restored
+
+**Key Finding:**
+Wrong gateway entry appeared in both active AND persistent 
+routes — meaning it would survive a reboot. This is a 
+critical distinction from a temporary misconfiguration.
+
+**Security Observations:**
+- A misconfigured or malicious gateway silently drops 
+  all outbound traffic
+- Persistent routes survive reboots — malware uses this 
+  to maintain traffic redirection permanently
+- `ping 8.8.8.8` bypasses DNS — if ping fails but DNS 
+  works, gateway is the problem
+- Always check persistent routes section in `route print` 
+  — not just active routes
+- `Destination host unreachable` means packet died locally,
+  never reached the internet
