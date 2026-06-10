@@ -184,3 +184,124 @@ critical distinction from a temporary misconfiguration.
   — not just active routes
 - `Destination host unreachable` means packet died locally,
   never reached the internet
+
+## Week 4 — Rogue Device Detection via ARP
+**Scenario:** Simulating and detecting an unauthorised device 
+on the network using ARP cache analysis
+
+**Commands Used:**
+- `arp -a` — view ARP cache
+- `arp -s [IP] [MAC]` — add static ARP entry (simulate rogue device)
+- `arp -d *` — clear ARP cache
+
+**What I Did:**
+1. Ran `arp -a` — captured clean baseline, one dynamic 
+   entry (router at `10.76.79.x`)
+2. Added fake static entry to simulate rogue device:
+   `arp -s 10.245.181.x aa-bb-cc-dd-ee-ff`
+3. Ran `arp -a` — confirmed rogue device appeared as 
+   static entry with unknown MAC `aa-bb-cc-dd-ee-ff`
+4. Cleared ARP cache with `arp -d *`
+5. Ran `arp -a` — confirmed rogue entry removed, 
+   only legitimate router entry remained
+
+**Key Finding:**
+Rogue device appeared as a `static` entry — manually added 
+entries are always static. On a real network, an unexpected 
+static entry is an immediate red flag requiring investigation.
+
+**Security Observations:**
+- Only `dynamic` entries are legitimately learned by the network
+- An unexpected `static` entry indicates manual manipulation 
+  — investigate immediately
+- On a corporate network, compare ARP cache against known 
+  device inventory — any unknown MAC is a potential threat
+- ARP cache poisoning would show a `dynamic` entry where 
+  an attacker's MAC replaces the router's MAC for the 
+  same IP address
+- `arp -d *` requires administrator privileges — 
+  Windows restricts ARP modification as a security control
+
+  ## Week 4 — Blocked Port Identification
+**Scenario:** Identifying open and blocked ports using 
+netstat and Windows Firewall
+
+**Commands Used:**
+- `netstat -an` — view all active connections and listening ports
+- `netstat -an | findstr [port]` — filter for specific port
+- `wf.msc` — Windows Firewall management console
+
+**What I Did:**
+1. Ran `netstat -an` — captured all active connections 
+   and listening ports
+2. Identified key listening ports on the machine:
+   - Port `135` — RPC (Remote Procedure Call)
+   - Port `445` — SMB (Windows file sharing)
+   - Port `5040` — Windows system service
+3. Ran `netstat -an | findstr 8080` — returned nothing, 
+   port not open or listening
+4. Created inbound block rule for port `8080` via `wf.msc`
+5. Confirmed port `8080` still returns no results — blocked
+6. Verified port `445` active: `netstat -an | findstr 445` 
+   returned two LISTENING entries
+   ## Week 4 — Blocked Port Identification
+**Scenario:** Identifying open and blocked ports using 
+netstat and Windows Firewall
+
+**Commands Used:**
+- `netstat -an` — view all active connections and listening ports
+- `netstat -an | findstr [port]` — filter for specific port
+- `wf.msc` — Windows Firewall management console
+
+**What I Did:**
+1. Ran `netstat -an` — captured all active connections 
+   and listening ports
+2. Identified key listening ports on the machine:
+   - Port `135` — RPC (Remote Procedure Call)
+   - Port `445` — SMB (Windows file sharing)
+   - Port `5040` — Windows system service
+3. Ran `netstat -an | findstr 8080` — returned nothing, 
+   port not open or listening
+4. Created inbound block rule for port `8080` via `wf.msc`
+5. Confirmed port `8080` still returns no results — blocked
+6. Verified port `445` active: `netstat -an | findstr 445` 
+   returned two LISTENING entries
+7.  <img width="1728" height="1066" alt="WhatsApp Image 2026-06-10 at 10 39 05 PM" src="https://github.com/user-attachments/assets/4fad085c-e5a4-4941-82f4-1cef938773c6" />
+8. Removed test firewall rule after verification
+
+**Key Finding:**
+Port `8080` returned no results before AND after blocking — 
+confirming nothing was listening on it.
+<img width="1574" height="580" alt="WhatsApp Image 2026-06-10 at 10 41 49 PM" src="https://github.com/user-attachments/assets/7a33df21-299f-4498-9875-85742471893e" />
+Port `445` (SMB) 
+is actively listening on this machine.
+
+**Security Observations:**
+- Port `445` (SMB) listening is a known attack vector — 
+  responsible for WannaCry ransomware propagation in 2017
+- Any unexpected `LISTENING` port is a potential backdoor 
+  — investigate the process behind it
+- `TIME_WAIT` connections are normal — socket closing after 
+  completed session
+- `ESTABLISHED` connections show active communication — 
+  verify all foreign addresses are legitimate
+- Use `netstat -an | findstr [port]` to quickly confirm 
+  whether a specific port is open or blocked
+8. Removed test firewall rule after verification
+
+**Key Finding:**
+Port `8080` returned no results before AND after blocking — 
+confirming nothing was listening on it. Port `445` (SMB) 
+is actively listening on this machine.
+
+**Security Observations:**
+- Port `445` (SMB) listening is a known attack vector — 
+  responsible for WannaCry ransomware propagation in 2017
+- Any unexpected `LISTENING` port is a potential backdoor 
+  — investigate the process behind it
+- `TIME_WAIT` connections are normal — socket closing after 
+  completed session
+- `ESTABLISHED` connections show active communication — 
+  verify all foreign addresses are legitimate
+- Use `netstat -an | findstr [port]` to quickly confirm 
+  whether a specific port is open or blocked
