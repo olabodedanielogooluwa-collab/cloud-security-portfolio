@@ -305,3 +305,60 @@ is actively listening on this machine.
   verify all foreign addresses are legitimate
 - Use `netstat -an | findstr [port]` to quickly confirm 
   whether a specific port is open or blocked
+
+## Week 4 — DHCP Failure Simulation & Recovery
+**Scenario:** Simulating DHCP failure by disabling network 
+adapter and observing complete connectivity loss
+
+**Commands Used:**
+- `ipconfig /all` — verify IP assignment and DHCP lease
+- `ping 8.8.8.8` — test connectivity independent of DNS
+- `Win + R → ncpa.cpl` — disable/enable network adapter
+
+**What I Did:**
+1. Ran `ipconfig /all` — confirmed active DHCP lease:
+   - IP: `10.230.128.x`
+   - DHCP Server: `10.230.128.x`
+   - Lease obtained and expiry timestamps visible
+2. Disabled WiFi adapter via `ncpa.cpl`
+3. Ran `ipconfig /all` — WiFi adapter disappeared from 
+   output, no IP assigned
+4. <img width="1280" height="844" alt="WhatsApp Image 2026-06-11 at 10 44 22 PM" src="https://github.com/user-attachments/assets/04d1c861-9dac-48bb-a664-e4d42d71fec6" />
+5. Ran `ping 8.8.8.8` — returned `General Failure` 
+   on all 4 packets, 100% loss
+6. <img width="1280" height="844" alt="WhatsApp Image 2026-06-11 at 10 44 22 PM" src="https://github.com/user-attachments/assets/1c3e015b-4ace-485a-8ad0-27412b989d18" />
+7. Re-enabled WiFi adapter via `ncpa.cpl`
+8. Windows automatically contacted DHCP server and 
+   obtained fresh lease
+9. Ran `ipconfig /all` — confirmed new lease obtained 
+   at `17:51:28`, expiring `18:51:27`
+10. <img width="607" height="1080" alt="WhatsApp Image 2026-06-11 at 10 49 08 PM" src="https://github.com/user-attachments/assets/2e565411-d110-4ade-9b60-678323cec201" />
+11. Ran `ping 8.8.8.8` — 4/4 packets received, 
+   full connectivity restored
+
+**Key Finding:**
+When adapter was disabled, machine had no IP whatsoever — 
+not even an APIPA fallback. Full DHCP recovery happened 
+automatically within seconds of re-enabling the adapter, 
+confirming DHCP server was healthy and responsive.
+
+**What APIPA Looks Like in a Real DHCP Failure:**
+If DHCP server is unreachable, Windows assigns a 
+self-generated fallback IP in the `169.254.x.x` range. 
+This is called APIPA (Automatic Private IP Addressing). 
+Any device showing `169.254.x.x` cannot reach the internet 
+or communicate outside the local subnet.
+
+**Security Observations:**
+- DHCP starvation attack floods the DHCP server with 
+  fake requests, exhausting the IP pool — legitimate 
+  devices get no IP assigned
+- Rogue DHCP server attack — attacker sets up their own 
+  DHCP server, assigns themselves as default gateway, 
+  intercepting all traffic
+- `169.254.x.x` on any device is an immediate red flag — 
+  investigate DHCP server health immediately
+- DHCP lease timestamps in `ipconfig /all` confirm when 
+  IP was assigned — useful for incident timeline reconstruction
+- Always check lease obtained time during incident response 
+  — it places a device on the network at a specific time
