@@ -1,4 +1,4 @@
-# cloud-security-portfolio
+n# cloud-security-portfolio
 Hands-on cloud security projects | Networking | AWS | Terraform | security+
 
 ---
@@ -358,7 +358,7 @@ or communicate outside the local subnet.
   intercepting all traffic
 - `169.254.x.x` on any device is an immediate red flag — 
   investigate DHCP server health immediately
-- DHCP lease timestamps in `ipconfig /all` confirm when 
+- DHCP lease timestamps in `ipconfig /all` cofirm when 
   IP was assigned — useful for incident timeline reconstruction
 - Always check lease obtained time during incident response 
   — it places a device on the network at a specific time
