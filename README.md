@@ -1,4 +1,4 @@
-n# cloud-security-portfolio
+# cloud-security-portfolio
 Hands-on cloud security projects | Networking | AWS | Terraform | security+
 
 ---
@@ -24,7 +24,7 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
 **Command:** `ipconfig /all`
 
 **Findings:**
-- Machine IP: `10.245.181.179` — assigned by DHCP
+- Machine IP: `10.245.181.x` — assigned by DHCP
 - Subnet Mask: `255.255.255.0` — /24 network, 254 usable hosts
 - Default Gateway: `10.245.181.99` — all external traffic routes here
 - DHCP Server: `10.245.181.99` — router handling IP assignment
@@ -39,7 +39,7 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
 **Command:** `arp -a`
 
 **Findings:**
-- Router: `10.245.181.99` — only dynamic entry, MAC `c6-64-97-7b-d1-b2`
+- Router: `10.245.181.99` — only dynamic entry, MAC `c6-64-97-xx-xx-xx`
 - `10.245.181.255` — broadcast address, static, normal
 - `224.0.0.x` entries — multicast traffic, normal background activity
 - `255.255.255.255` — limited broadcast, normal
@@ -221,29 +221,7 @@ static entry is an immediate red flag requiring investigation.
   same IP address
 - `arp -d *` requires administrator privileges — 
   Windows restricts ARP modification as a security control
-
-  ## Week 4 — Blocked Port Identification
-**Scenario:** Identifying open and blocked ports using 
-netstat and Windows Firewall
-
-**Commands Used:**
-- `netstat -an` — view all active connections and listening ports
-- `netstat -an | findstr [port]` — filter for specific port
-- `wf.msc` — Windows Firewall management console
-
-**What I Did:**
-1. Ran `netstat -an` — captured all active connections 
-   and listening ports
-2. Identified key listening ports on the machine:
-   - Port `135` — RPC (Remote Procedure Call)
-   - Port `445` — SMB (Windows file sharing)
-   - Port `5040` — Windows system service
-3. Ran `netstat -an | findstr 8080` — returned nothing, 
-   port not open or listening
-4. Created inbound block rule for port `8080` via `wf.msc`
-5. Confirmed port `8080` still returns no results — blocked
-6. Verified port `445` active: `netstat -an | findstr 445` 
-   returned two LISTENING entries
+  
    ## Week 4 — Blocked Port Identification
 **Scenario:** Identifying open and blocked ports using 
 netstat and Windows Firewall
