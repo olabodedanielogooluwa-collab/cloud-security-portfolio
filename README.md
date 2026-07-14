@@ -342,3 +342,409 @@ or communicate outside the local subnet.
   IP was assigned — useful for incident timeline reconstruction
 - Always check lease obtained time during incident response 
   — it places a device on the network at a specific time
+
+
+# cloud-security-portfolio
+Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security+
+
+---
+
+## Week 5 — File Navigation
+
+**Commands:**
+- `pwd` — print current working directory
+- `cd /path` — navigate using absolute path
+- `cd folder` — navigate using relative path
+- `ls` — list directory contents
+- `ls -a` — show hidden files
+- `ls -l` — detailed listing with permissions, owner, size, timestamp
+- `ls -la` — hidden files with full detail combined
+
+**Security Observations:**
+- `ls -la /etc` reveals hidden files and permission levels on critical config files
+- Hidden files (prefixed with `.`) are commonly used to conceal attacker tools
+- Always check ownership and permissions when auditing an unfamiliar system
+
+---
+
+## Week 5 — File Operations
+
+**Commands:**
+- `touch filename` — create new empty file
+- `touch file1 file2` — create multiple files simultaneously
+- `cp source dest` — copy file to destination
+- `cp -r dir/ ~/documents` — copy entire directory recursively
+- `cp -i source dest` — prompt before overwriting existing file
+- `mv oldname newname` — rename a file
+- `mv file ~/documents` — move file to directory
+- `mkdir documents` — create single directory
+- `mkdir -p a/b/c` — create nested directories in one command
+- `rm filename` — delete file
+- `rm -r directory/` — delete directory and all contents
+- `file filename` — identify file type and content
+
+**Security Observations:**
+- `rm -r` is irreversible — always confirm path before running
+- `file` command identifies true file type regardless of extension — attackers rename malicious files to bypass filters
+- `cp -i` flag prevents silent overwrites — useful when handling evidence files during incident response
+
+---
+
+## Week 5 — Text Viewing and Searching
+
+**Commands:**
+- `cat filename` — display full file contents
+- `cat -n filename` — display file with line numbers
+- `less filename` — scroll through large files page by page
+- `head filename` — view first 10 lines of a file
+- `head -n 20 filename` — view first 20 lines
+- `tail filename` — view last 10 lines of a file
+- `tail -f /var/log/auth.log` — stream file live as it updates
+- `grep "pattern" filename` — search for pattern inside file
+- `grep -i "pattern" filename` — case-insensitive search
+- `grep -c "pattern" filename` — count matching lines
+- `grep "Failed password" /var/log/auth.log` — find failed SSH login attempts
+- `sort filename` — sort file contents alphabetically
+- `sort -r filename` — sort in reverse order
+
+**Security Observations:**
+- `tail -f /var/log/auth.log` monitors SSH login attempts in real time — active threat detection
+- `grep "Failed password" /var/log/auth.log` is one of the first commands run during an SSH brute force investigation
+- Hundreds of failed attempts from a single IP within minutes is a confirmed brute force pattern
+- `grep "Accepted" /var/log/auth.log` confirms which login attempts succeeded — critical during post-incident review
+
+---
+
+## Week 5 — Vim Text Editor
+
+**Key Concept:** Vim is the standard editor on remote servers accessed via SSH. GUI editors are unavailable on locked-down machines — vim proficiency is non-negotiable for cloud and SOC work.
+
+**Mode Switching:**
+- `i` — enter insert mode (start typing)
+- `Esc` — return to normal mode
+- `:` — enter command mode (save, quit, search)
+
+**Navigation (Normal Mode):**
+- `h` `j` `k` `l` — move left, down, up, right
+
+**Editing:**
+- `dd` — delete entire current line
+- `3dd` — delete three lines
+- `u` — undo last action
+- `Ctrl-R` — redo last undone action
+- `cw` — change word from cursor position
+- `x` — delete character under cursor
+
+**Searching:**
+- `/searchterm` — search forward through file
+- `?searchterm` — search backward through file
+- `n` — jump to next occurrence
+- `N` — jump to previous occurrence
+
+**Saving and Exiting:**
+- `:w` — save file
+- `:q` — quit (only if no unsaved changes)
+- `:wq` — save and quit
+- `:q!` — quit and discard all unsaved changes
+- `ZZ` — shortcut for save and quit
+
+**Security Observations:**
+- Vim is how you edit `sshd_config`, `sudoers`, and other critical config files over SSH
+- `:q!` exits without saving — always confirm you saved before exiting a config file
+- `/searchterm` lets you locate specific directives inside long config files like `sshd_config` instantly
+
+---
+
+## Week 5 — User Management
+
+**Key Files:**
+- `/etc/passwd` — maps usernames to UIDs, lists every user account on the system
+- `/etc/shadow` — stores encrypted passwords, most sensitive user file on the system
+- `/etc/group` — defines group memberships
+- `/etc/sudoers` — controls who can run commands as root
+
+**Commands:**
+- `cat /etc/passwd` — view all user accounts
+- `sudo cat /etc/shadow` — view encrypted passwords (requires root)
+- `cat /etc/group` — view all group definitions
+- `sudo useradd username` — create new user
+- `sudo userdel -r username` — delete user and their home directory
+- `passwd username` — change a user's password
+- `visudo` — safely edit the sudoers file
+
+**Key Findings:**
+- Root always has UID 0 — any other account with UID 0 is a critical red flag
+- `*` or `!` in `/etc/shadow` means account is locked and cannot login
+- Blank password field in `/etc/shadow` means user has no password set
+
+**Security Observations:**
+- `/etc/passwd` is readable by all users — attackers use it to enumerate accounts immediately after gaining access
+- `/etc/shadow` is a primary target — offline password cracking requires extracting this file
+- On a compromised system, check for unexpected new accounts in `/etc/passwd` — attacker persistence technique
+- Group misconfiguration is a common privilege escalation vector — verify `/etc/group` for unexpected sudo or admin group members
+
+---
+
+## Week 5 — File Permissions
+
+**Command:** `ls -l`
+
+**Reading Permission Strings:**
+- First character indicates file type — `d` directory, `-` regular file, `l` symbolic link
+- Next 9 characters are permissions split into three groups of three
+- Format: `[type][owner][group][others]` — example: `-rwxr-xr--`
+- `r` — read (value 4)
+- `w` — write (value 2)
+- `x` — execute (value 1)
+- `-` — no permission (value 0)
+
+**Example decoded:**
+- `-rwxr-xr--` — regular file, owner can read/write/execute, group can read/execute, others can only read
+
+**chmod — Modifying Permissions:**
+- `chmod u+x filename` — add execute permission for owner
+- `chmod g-w filename` — remove write permission from group
+- `chmod 755 filename` — rwxr-xr-x (owner full, group and others read/execute)
+- `chmod 644 filename` — rw-r--r-- (owner read/write, others read only)
+- `chmod 600 filename` — rw------- (owner read/write only — used for private keys)
+
+**chown — Changing Ownership:**
+- `sudo chown user filename` — change file owner
+- `sudo chgrp group filename` — change group owner
+- `sudo chown user:group filename` — change both simultaneously
+- `sudo chown root:root /etc/ssh/sshd_config` — correct ownership for SSH config
+
+**Security Observations:**
+- `/etc/ssh/sshd_config` should always be owned by `root:root` with permissions `644` — any deviation is a finding
+- Private key files must be `chmod 600` — SSH refuses to use keys with open permissions
+- `chmod 777` on any file is a critical misconfiguration — grants full access to every user on the system
+- On a compromised system, check for world-writable files — attackers use them as staging areas
+
+---
+
+## Week 5 — Process Management
+
+**Commands:**
+- `ps` — snapshot of current session processes
+- `ps aux` — all processes, all users, including those with no terminal
+- `ps -ef` — full listing including UID, PPID, CPU usage, and start time
+- `top` — real-time process monitor showing CPU and memory usage
+- `cat /proc/[PID]/status` — kernel's live view of a specific process
+- `ls /proc` — lists all running process IDs as numbered directories
+
+**Process State Codes (STAT column in ps aux):**
+- `R` — running, actively executing or in run queue
+- `S` — interruptible sleep, waiting for an event
+- `D` — uninterruptible sleep, in I/O operation
+- `Z` — zombie, finished but not yet reaped by parent process
+- `T` — stopped, suspended by Ctrl+Z
+
+**Kill Signals:**
+- `kill 1234` — send SIGTERM (15), polite termination request
+- `kill -15 1234` — SIGTERM explicitly
+- `kill -9 1234` — SIGKILL, force kill, cannot be blocked or ignored
+- `kill -0 1234` — check if process exists without sending a signal
+
+**Incident Response Sequence — Suspicious Process:**
+1. `top` — identify suspicious resource usage
+2. `ps aux` — full process listing, look for unknown names or root processes
+3. `cat /proc/[PID]/status` — inspect process via kernel
+4. `kill -15 [PID]` — attempt polite termination first
+5. `kill -9 [PID]` — force kill if process does not respond
+6. `ps aux | grep [PID]` — confirm process is gone
+
+**Key Finding:**
+- `/proc` is not a real filesystem — it is created in memory by the kernel and contains live data only
+- Data in `/proc` does not persist after reboot — it cannot be used as forensic disk evidence
+
+**Security Observations:**
+- `ps aux` is one of the first commands run on a suspected compromised server — look for processes with unusual names or unexpected root ownership
+- A zombie process (`Z`) cannot be killed directly — the parent process must be terminated
+- Attackers sometimes disguise malicious processes with names similar to system processes — compare against known process list
+- `/proc/[PID]/status` gives the kernel's direct view — harder to spoof than standard tools
+
+---
+
+## Week 5 — Package Management
+
+**Ubuntu/Debian — apt:**
+- `sudo apt update` — refresh package index from repositories
+- `sudo apt upgrade` — apply all available updates and security patches
+- `sudo apt install package_name` — install a package
+- `sudo apt remove package_name` — remove a package
+- `apt show package_name` — display package details
+
+**Red Hat/CentOS — yum:**
+- `sudo yum update` — update all packages
+- `sudo yum install package_name` — install a package
+- `sudo yum erase package_name` — remove a package
+- `yum info package_name` — display package details
+
+**Key Finding:**
+- Debian-based systems (Ubuntu) use `.deb` packages managed by `apt`
+- Red Hat-based systems (RHEL, CentOS, Fedora) use `.rpm` packages managed by `yum`
+
+**Security Observations:**
+- `sudo apt update && sudo apt upgrade` is a hardening action, not routine maintenance — unpatched packages are one of the most common real-world breach vectors
+- Always run update before installing new software — ensures latest secure version is pulled
+- Package repositories are defined in `/etc/apt/sources.list` — a malicious repository entry here is a supply chain attack vector
+
+---
+
+## Week 5 — Filesystem Hierarchy
+
+**Command:** `ls -l /`
+
+**Essential System Directories:**
+- `/` — root directory, starting point of entire filesystem
+- `/bin` — essential user binaries (`ls`, `cp`, `mv`)
+- `/sbin` — system binaries, root only (`fdisk`, `iptables`)
+- `/etc` — system configuration files — primary hardening target
+- `/lib` — shared libraries required by `/bin` and `/sbin`
+- `/boot` — kernel and bootloader files
+
+**User and Application Data:**
+- `/home` — personal directories for each user
+- `/root` — home directory for root user, separate from `/home`
+- `/usr` — user-installed software and utilities (`/usr/bin`, `/usr/local`)
+- `/opt` — optional or third-party software packages
+
+**Dynamic and Temporary Data:**
+- `/var` — variable data, changes during operation (`/var/log` for logs)
+- `/tmp` — temporary files, world-writable, often cleared on reboot
+- `/run` — runtime data since last boot, PIDs and process info
+
+**System Information:**
+- `/proc` — virtual filesystem, live kernel and process data
+- `/sys` — kernel and hardware interface
+
+**Security Observations:**
+- `/etc` is the primary attacker target on any Linux system — `sshd_config`, `passwd`, and `sudoers` all live here
+- `/tmp` is world-writable — commonly used by attackers to stage malware and exploit scripts
+- `/var/log` is your evidence trail — always check here first during incident response
+- `/home/username/.ssh/authorized_keys` controls SSH access — an attacker adding their public key here establishes persistent access
+- `/proc` data is live and cannot be tampered with on disk — reliable for real-time process investigation
+
+---
+
+## Week 5 — Logging
+
+**Key Log Files:**
+- `/var/log/auth.log` — all authentication events, SSH logins and failures
+- `/var/log/syslog` — comprehensive system events, excludes authentication messages
+- `/var/log/messages` — general system messages from kernel and daemons
+- `/var/log/kern.log` — persistent kernel log
+- `/var/log/dmesg` — kernel ring buffer, boot and hardware events
+
+**Commands:**
+- `tail -f /var/log/auth.log` — stream authentication events live as they happen
+- `grep "Failed password" /var/log/auth.log` — find all failed SSH login attempts
+- `grep "Accepted" /var/log/auth.log` — find all successful SSH logins
+- `dmesg` — view kernel log for hardware and boot issues
+- `logger -s "Test entry"` — manually send a log entry to syslog
+
+**Log Rotation:**
+- Managed by `logrotate` — prevents logs from filling disk
+- Renames current log, creates new empty log, compresses old entries, deletes oldest
+- Config: `/etc/logrotate.conf` — main settings
+- Config: `/etc/logrotate.d/` — per-application rotation settings
+
+**Security Observations:**
+- `/var/log/auth.log` is the first file checked during an SSH brute force investigation
+- Hundreds of failed login attempts from one IP in minutes is a confirmed brute force attack pattern
+- A successful login immediately following many failures indicates a successful brute force — critical finding
+- Attackers often clear or tamper with log files to cover tracks — absence of expected log entries is itself a red flag
+- Log rotation means old evidence may be compressed or deleted — always export logs early in an investigation
+
+---
+
+## Week 5 — SSH Key Authentication
+
+**Key Concept:** SSH key authentication replaces passwords with a cryptographic key pair, eliminating the entire category of brute force and credential stuffing attacks.
+
+**How It Works:**
+- Private key stays on your machine — never leaves, never shared
+- Public key is deployed to the server's `~/.ssh/authorized_keys`
+- Server issues a cryptographic challenge — only the holder of the correct private key can solve it
+- No password is ever sent over the network
+
+**Commands:**
+- `ssh-keygen -t ed25519 -C "label"` — generate ed25519 key pair
+- `cat ~/.ssh/id_ed25519.pub` — view public key for deployment
+- `ssh-copy-id -i ~/.ssh/id_ed25519.pub user@server` — deploy public key to server
+- `ssh -i ~/.ssh/id_ed25519 user@server` — connect using key authentication
+- `chmod 600 ~/.ssh/id_ed25519` — set correct private key permissions
+- `chmod 700 ~/.ssh/` — set correct SSH directory permissions
+
+**Key Finding:**
+- `ssh-keygen` creates two files — `id_ed25519` (private) and `id_ed25519.pub` (public)
+- ed25519 is preferred over RSA — stronger cryptography, shorter key, current standard
+- SSH refuses to use private keys with permissions more open than `600`
+
+**Security Observations:**
+- Private key is only as secure as the machine it lives on — disk encryption and key passphrase are both required protections
+- If the machine holding the private key is stolen, immediately remove the corresponding public key from `~/.ssh/authorized_keys` on all servers
+- A passphrase on the private key means the stolen file is useless without it — always set one during `ssh-keygen`
+- The public key can be distributed freely — only the private key must be protected
+
+---
+
+## Week 5 — SSH Hardening
+
+**File:** `/etc/ssh/sshd_config`
+
+**Changes Made:**
+
+```
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+```
+
+**Commands:**
+- `sudo nano /etc/ssh/sshd_config` — open SSH daemon config for editing
+- `sudo systemctl restart sshd` — apply configuration changes
+- `sudo systemctl status sshd` — confirm daemon is running after restart
+
+**Why Each Setting Matters:**
+- `PermitRootLogin no` — root has no login audit trail and gives instant full system access if compromised. Disabling forces attackers to compromise a limited user first then escalate — adding a detectable step
+- `PasswordAuthentication no` — eliminates brute force and credential stuffing entirely. A 256-bit ed25519 key cannot be guessed. Removes the whole attack category
+- `PubkeyAuthentication yes` — must be explicitly confirmed when disabling passwords. Failing to include this locks everyone out including yourself
+
+**Critical Sequence — Never Skip:**
+1. Generate key pair
+2. Deploy public key to server
+3. Test key login in a **separate terminal** — confirm it works
+4. Edit `sshd_config`
+5. Restart sshd
+6. Test login **again** before closing your existing session
+
+**Key Finding:**
+Closing your working SSH session before confirming the new configuration allows you in will lock you out of the server permanently. Step 3 and Step 6 are non-negotiable.
+
+**Security Observations:**
+- `sshd_config` should be owned by `root:root` with permissions `644` — verify with `ls -la /etc/ssh/sshd_config`
+- Disabling password auth without first deploying a key leaves the server permanently inaccessible
+- Moving SSH off port 22 reduces automated scan noise but is not a real security control — never treat it as one
+- After hardening, test from a different machine or terminal before closing any existing sessions
+
+---
+
+## Hands-On Checklist — Pending WSL2
+
+- [ ] Navigate filesystem — `ls -la` on `/etc`, `/var/log`, `/home`, `/proc`
+- [ ] Create, edit, and delete files using nano and vim
+- [ ] Decode live permission strings from `ls -la` output
+- [ ] Run `ps aux` and identify process states on a real system
+- [ ] Execute full incident response sequence on a suspicious process
+- [ ] Generate ed25519 key pair with `ssh-keygen`
+- [ ] Inspect `~/.ssh/` directory and confirm file permissions
+- [ ] Edit `sshd_config` and apply all hardening changes
+- [ ] Restart sshd and confirm with `systemctl status`
+- [ ] Complete OverTheWire Bandit levels 0-10
+
+---
+
+*Week 05 of 12 — Cloud Security Self-Study Program*
+*Repository: cloud-security-portfolio*
