@@ -5,7 +5,9 @@ Hands-on cloud security projects | Networking | AWS | Terraform | security+
 
 ## Week 4 — Tracert Analysis
 **Command:** `tracert google.com`
-<img width="720" height="1280" alt="WhatsApp Image 2026-06-04 at 8 11 14 PM" src="https://github.com/user-attachments/assets/bfac40db-6baa-4a20-a42b-96e6f233c8d7" />
+<img width="687" height="496" alt="WhatsApp Image 2026-07-14 at 3 40 29 PM" src="https://github.com/user-attachments/assets/efc9931e-79eb-433c-9a4a-c0063a6c4f5c" />
+
+
 
 **Findings:**
 - Trace reached 15 hops into Google's network (142.250.x.x / 192.178.x.x)
