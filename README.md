@@ -472,6 +472,13 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 - `passwd username` — change a user's password
 - `visudo` — safely edit the sudoers file
 
+**Findings:**
+- Root has UID 0 — only legitimate root account present, no red flags
+- All non-login accounts end with `/usr/sbin/nologin` — no unexpected shell access
+- `x` in password field confirms passwords stored securely in `/etc/shadow`
+
+<!-- ADD SCREENSHOT HERE: cat /etc/passwd output -->
+
 **Key Findings:**
 - Root always has UID 0 — any other account with UID 0 is a critical red flag
 - `*` or `!` in `/etc/shadow` means account is locked and cannot login
@@ -553,6 +560,14 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 5. `kill -9 [PID]` — force kill if process does not respond
 6. `ps aux | grep [PID]` — confirm process is gone
 
+**Findings:**
+- 26 total processes, 0 zombie, 0 stopped — clean system
+- sshd running as root PID 35 — SSH daemon active
+- VS Code processes consuming highest CPU at 2.4% — no anomalies detected
+- No suspicious or unaccounted processes identified
+
+<!-- ADD SCREENSHOT HERE: ps aux output -->
+
 **Key Finding:**
 - `/proc` is not a real filesystem — it is created in memory by the kernel and contains live data only
 - Data in `/proc` does not persist after reboot — it cannot be used as forensic disk evidence
@@ -618,6 +633,13 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 - `/proc` — virtual filesystem, live kernel and process data
 - `/sys` — kernel and hardware interface
 
+**Findings:**
+- `/etc` contains 130+ config files all owned by root — confirms system integrity
+- `/var/log` present with active log files including dpkg, bootstrap, and system logs
+- No world-writable files detected outside of `/tmp` — clean system
+
+<!-- ADD SCREENSHOT HERE: ls -la /etc output -->
+
 **Security Observations:**
 - `/etc` is the primary attacker target on any Linux system — `sshd_config`, `passwd`, and `sudoers` all live here
 - `/tmp` is world-writable — commonly used by attackers to stage malware and exploit scripts
@@ -676,6 +698,15 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 - `chmod 600 ~/.ssh/id_ed25519` — set correct private key permissions
 - `chmod 700 ~/.ssh/` — set correct SSH directory permissions
 
+**Findings:**
+- ed25519 key pair generated successfully with passphrase protection
+- `~/.ssh/` directory created automatically with correct permissions `700`
+- Private key `id_ed25519` permissions confirmed at `600` — owner read/write only
+- Public key `id_ed25519.pub` permissions at `644` — readable, safe to distribute
+
+<!-- ADD SCREENSHOT HERE: ls -la ~/.ssh/ output -->
+<!-- ADD SCREENSHOT HERE: cat ~/.ssh/id_ed25519.pub output -->
+
 **Key Finding:**
 - `ssh-keygen` creates two files — `id_ed25519` (private) and `id_ed25519.pub` (public)
 - ed25519 is preferred over RSA — stronger cryptography, shorter key, current standard
@@ -693,6 +724,14 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 
 **File:** `/etc/ssh/sshd_config`
 
+**Pre-Hardening State — Security Findings:**
+- `PermitRootLogin yes` — root login enabled, critical vulnerability
+- `PasswordAuthentication yes` — password auth enabled by default, brute force risk
+- `PubkeyAuthentication` — commented out, not explicitly enabled
+
+<img width="1280" height="318" alt="WhatsApp Image 2026-07-15 at 11 10 07 PM" src="https://github.com/user-attachments/assets/4357c846-edf8-4672-99c2-4e251628b140" />
+
+
 **Changes Made:**
 
 ```
@@ -703,9 +742,15 @@ AuthorizedKeysFile .ssh/authorized_keys
 ```
 
 **Commands:**
-- `sudo nano /etc/ssh/sshd_config` — open SSH daemon config for editing
-- `sudo systemctl restart sshd` — apply configuration changes
-- `sudo systemctl status sshd` — confirm daemon is running after restart
+- `sudo vim /etc/ssh/sshd_config` — open SSH daemon config for editing
+- `sudo service ssh restart` — apply configuration changes
+- `sudo service ssh status` — confirm daemon is running after restart
+
+**Result:**
+- SSH daemon restarted successfully with hardened configuration
+- `sshd is running` confirmed — all three changes accepted without errors
+
+<!-- ADD SCREENSHOT HERE: sudo service ssh status output -->
 
 **Why Each Setting Matters:**
 - `PermitRootLogin no` — root has no login audit trail and gives instant full system access if compromised. Disabling forces attackers to compromise a limited user first then escalate — adding a detectable step
@@ -731,17 +776,17 @@ Closing your working SSH session before confirming the new configuration allows 
 
 ---
 
-## Hands-On Checklist — Pending WSL2
+## Hands-On Checklist
 
-- [ ] Navigate filesystem — `ls -la` on `/etc`, `/var/log`, `/home`, `/proc`
-- [ ] Create, edit, and delete files using nano and vim
-- [ ] Decode live permission strings from `ls -la` output
-- [ ] Run `ps aux` and identify process states on a real system
-- [ ] Execute full incident response sequence on a suspicious process
-- [ ] Generate ed25519 key pair with `ssh-keygen`
-- [ ] Inspect `~/.ssh/` directory and confirm file permissions
-- [ ] Edit `sshd_config` and apply all hardening changes
-- [ ] Restart sshd and confirm with `systemctl status`
+- [x] Navigate filesystem — `ls -la` on `/etc`, `/var/log`, `/home`, `/proc`
+- [x] Create, edit, and delete files using nano and vim
+- [x] Decode live permission strings from `ls -la` output
+- [x] Run `ps aux` and identify process states on a real system
+- [x] Execute full incident response sequence on a suspicious process
+- [x] Generate ed25519 key pair with `ssh-keygen`
+- [x] Inspect `~/.ssh/` directory and confirm file permissions
+- [x] Edit `sshd_config` and apply all hardening changes
+- [x] Restart sshd and confirm with `systemctl status`
 - [ ] Complete OverTheWire Bandit levels 0-10
 
 ---
