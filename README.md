@@ -477,7 +477,8 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 - All non-login accounts end with `/usr/sbin/nologin` — no unexpected shell access
 - `x` in password field confirms passwords stored securely in `/etc/shadow`
 
-<!-- ADD SCREENSHOT HERE: cat /etc/passwd output -->
+<img width="1080" height="118" alt="WhatsApp Image 2026-07-16 at 3 58 49 PM" src="https://github.com/user-attachments/assets/08c3cf2b-9d68-4adb-ba6b-82a612261d70" />
+
 
 **Key Findings:**
 - Root always has UID 0 — any other account with UID 0 is a critical red flag
@@ -566,7 +567,8 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 - VS Code processes consuming highest CPU at 2.4% — no anomalies detected
 - No suspicious or unaccounted processes identified
 
-<!-- ADD SCREENSHOT HERE: ps aux output -->
+<img width="1280" height="720" alt="WhatsApp Image 2026-07-16 at 4 00 14 PM" src="https://github.com/user-attachments/assets/30e08091-1360-45b7-aef8-0471f0f1bcc2" />
+
 
 **Key Finding:**
 - `/proc` is not a real filesystem — it is created in memory by the kernel and contains live data only
@@ -638,7 +640,8 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 - `/var/log` present with active log files including dpkg, bootstrap, and system logs
 - No world-writable files detected outside of `/tmp` — clean system
 
-<!-- ADD SCREENSHOT HERE: ls -la /etc output -->
+<img width="1280" height="318" alt="WhatsApp Image 2026-07-15 at 11 10 07 PM" src="https://github.com/user-attachments/assets/d74f5be1-64e3-4225-b855-885b42723eff" />
+
 
 **Security Observations:**
 - `/etc` is the primary attacker target on any Linux system — `sshd_config`, `passwd`, and `sudoers` all live here
@@ -704,8 +707,10 @@ Hands-on cloud security projects | Networking | Linux | SSH Hardening | Security
 - Private key `id_ed25519` permissions confirmed at `600` — owner read/write only
 - Public key `id_ed25519.pub` permissions at `644` — readable, safe to distribute
 
-<!-- ADD SCREENSHOT HERE: ls -la ~/.ssh/ output -->
-<!-- ADD SCREENSHOT HERE: cat ~/.ssh/id_ed25519.pub output -->
+<img width="1080" height="142" alt="WhatsApp Image 2026-07-16 at 4 05 48 PM" src="https://github.com/user-attachments/assets/b1805f88-8878-4a2a-b59a-a4748c638349" />
+
+<img width="1080" height="142" alt="WhatsApp Image 2026-07-16 at 4 05 48 PM" src="https://github.com/user-attachments/assets/8462af6f-8e26-4be0-bd76-ed2a54f639f3" />
+
 
 **Key Finding:**
 - `ssh-keygen` creates two files — `id_ed25519` (private) and `id_ed25519.pub` (public)
@@ -750,7 +755,8 @@ AuthorizedKeysFile .ssh/authorized_keys
 - SSH daemon restarted successfully with hardened configuration
 - `sshd is running` confirmed — all three changes accepted without errors
 
-<!-- ADD SCREENSHOT HERE: sudo service ssh status output -->
+<img width="1080" height="122" alt="WhatsApp Image 2026-07-16 at 4 14 13 PM" src="https://github.com/user-attachments/assets/8a8fbc6e-5595-4bd2-8105-1c7e30801c94" />
+
 
 **Why Each Setting Matters:**
 - `PermitRootLogin no` — root has no login audit trail and gives instant full system access if compromised. Disabling forces attackers to compromise a limited user first then escalate — adding a detectable step
