@@ -782,6 +782,95 @@ Closing your working SSH session before confirming the new configuration allows 
 
 ---
 
+## week 5 - Suspicious Process Detection ad Termination 
+
+**scenario:** Simulating a planted background process and execution incident response sequence to detect and terminate it
+
+**commands used:** 
+`sleep 1000 &` - plant bacground process simulating and attacker persistence 
+`ps aux | grep sleep` - locate the suspicious process by name 
+`cat /proc/[PID]/status` - inspect process directly via kernel filesystem 
+`kill -15 [PID]` - send SIGTERM, polite ermination request 
+`ps aux | grep sleep` - confirm process is gone 
+
+**What i did:**
+- Planted background process using `sleep 1000 &` - process assigned PID 2630
+  <img width="1080" height="65" alt="WhatsApp Image 2026-07-25 at 6 19 32 PM" src="https://github.com/user-attachments/assets/d1edfee2-5c63-4d7f-9178-5f8641642e99" />
+  
+- Ran `ps aux | grep sleep` - confirmed process visible in process table with PID 2630
+  <img width="1080" height="176" alt="WhatsApp Image 2026-07-25 at 6 20 19 PM" src="https://github.com/user-attachments/assets/d33b7d88-d255-4e19-81bb-3e4c64729871" />
+  
+- Ran `cat /proc/2630/status` - inspected process directly via kernel filesystem, confirmed state, owner, and resource usage
+  <img width="1080" height="494" alt="WhatsApp Image 2026-07-25 at 6 22 33 PM" src="https://github.com/user-attachments/assets/aa56560e-d8c3-42bb-aac9-991487de60fa" />
+  <img width="1080" height="437" alt="WhatsApp Image 2026-07-25 at 6 23 45 PM" src="https://github.com/user-attachments/assets/34373708-187e-43b8-a584-23fa1013861b" />
+  <img width="1080" height="244" alt="WhatsApp Image 2026-07-25 at 6 24 47 PM" src="https://github.com/user-attachments/assets/9c62d911-f018-4e9e-9ada-403b352a3726" />
+  
+- Ran `kill -15 2630` - sent SIGTERM polite termination request
+  <img width="1080" height="44" alt="WhatsApp Image 2026-07-25 at 6 25 28 PM" src="https://github.com/user-attachments/assets/49c4532a-7675-4ba4-919d-f8c510bd8310" />
+  
+- Ran `ps aux | grep sleep` - confirmed process no longer present in process table
+  <img width="1080" height="213" alt="WhatsApp Image 2026-07-25 at 6 26 23 PM" src="https://github.com/user-attachments/assets/451fcf58-937b-4401-acdc-a64922f99a67" />
+
+**key findings:** 
+- `Sleep 1000 &` creates a background process that maintains presence without consuming resources-mirrors how attacker persistence tools behave
+- Process was immediately visible in both `ps aux` and `/proc` after planting
+- SIGTERM was sufficient for termination - no SIGKILL required
+- /proc/[PID]/status confirmed process state, ownership, and resource usage before termination
+
+**Security Observations:**
+- Real attacker processes disguise themselves with names similar to system processes - always verify unknown process names before terminating
+- `ps aux | grep [NAME]` is the fastest way to locate a specific suspicious process
+- Always attempt kill -15 before kill -9 - SIGTERM allows the process to clean up, SIGKILL does not
+- A process that ignores SIGTERM and requires SIGKILL is a red flag - legitimate processes respond o polite termination
+- `/proc/[PID]/status` gives the kernel's direct view - harder to spoof than standard process listing tools
+
+## Week 5 — sshd_config Misconfiguration and Recovery
+ 
+**Scenario:** Deliberately introducing an invalid value into sshd_config, diagnosing the failure using sshd -t, and recovering the service
+ 
+**Commands Used:**
+- `sudo vim /etc/ssh/sshd_config` — open SSH daemon config for editing
+- `sudo sshd -t` — test config file for errors without restarting the service
+- `sudo service ssh restart` — apply corrected configuration
+- `sudo service ssh status` — confirm daemon is running after recovery
+  
+**What I Did:**
+1. Opened `/etc/ssh/sshd_config` using `sudo vim /etc/ssh/sshd_config`
+2. Changed `PermitRootLogin no` to `PermitRootLogin BROKEN` — deliberate invalid value introduced on line 41
+   <img width="1080" height="607" alt="WhatsApp Image 2026-07-25 at 6 40 11 PM" src="https://github.com/user-attachments/assets/2629fcf2-045e-4c2f-ad62-f40461d18a96" />
+
+3. Ran `sudo sshd -t` — config test returned error without restarting the service:
+```
+/etc/ssh/sshd_config line 41: unsupported option "BROKEN".
+```
+ <img width="1206" height="117" alt="WhatsApp Image 2026-07-25 at 6 37 19 PM" src="https://github.com/user-attachments/assets/7cf0ae2e-fb0e-41ac-88e9-bb52f08b2e3d" />
+ 
+4. Reopened `sshd_config` and corrected `BROKEN` back to `no`
+   <img width="1080" height="194" alt="WhatsApp Image 2026-07-25 at 6 37 25 PM" src="https://github.com/user-attachments/assets/130262a4-65ed-4300-a795-50798ec829f3" />
+
+5. Ran `sudo service ssh restart` — returned `[ OK ]`
+6. Ran `sudo service ssh status` — returned `sshd is running`, service fully recovered
+  <img width="1256" height="133" alt="WhatsApp Image 2026-07-25 at 6 37 35 PM" src="https://github.com/user-attachments/assets/40047215-1160-4945-8a22-85aea48971c4" />
+
+
+**Key Finding:**
+- `sudo sshd -t` identified the exact line number of the misconfiguration — line 41 — without restarting the service or causing any disruption
+- Invalid value `BROKEN` triggered `unsupported option` error — sshd rejects unrecognised directives immediately
+- Always run `sudo sshd -t` before restarting sshd — it catches errors before they cause lockout
+**What Would Happen on a Real Server:**
+- If sshd failed to restart after a bad config edit and the existing session was closed, the server would be permanently inaccessible via SSH
+- `sudo sshd -t` is the correct diagnostic tool — test config first, restart second, always
+- A deliberate sshd_config misconfiguration by an attacker is a known lockout technique — administrators lose SSH access to their own server
+**Security Observations:**
+- A single invalid line in `sshd_config` can take down SSH access entirely — every config change must be tested before applying
+- `sudo sshd -t` validates the full config file and reports exact line numbers of errors — no guesswork required
+- Always keep an existing SSH session open while editing `sshd_config` — close it only after confirming the new config works
+- Log the before and after state of any config change during incident response — establishes timeline and intent
+- In a real incident, a misconfigured sshd_config could be an attacker's deliberate move to lock administrators out permanently
+ 
+
+---
+
 ## Hands-On Checklist
 
 - [x] Navigate filesystem — `ls -la` on `/etc`, `/var/log`, `/home`, `/proc`
@@ -793,7 +882,9 @@ Closing your working SSH session before confirming the new configuration allows 
 - [x] Inspect `~/.ssh/` directory and confirm file permissions
 - [x] Edit `sshd_config` and apply all hardening changes
 - [x] Restart sshd and confirm with `systemctl status`
-- [ ] Complete OverTheWire Bandit levels 0-10
+- [x] Plant suspicious process - detect with `ps aux`, terminate with `kill`, document
+- [x] Delibrately break `sshd_config` - diagnose with `sshd -t`, recover, document
+- [ ]  Complete OverTheWire Bandit levels 0-10
 
 ---
 
