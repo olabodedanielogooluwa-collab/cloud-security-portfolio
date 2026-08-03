@@ -890,3 +890,97 @@ Closing your working SSH session before confirming the new configuration allows 
 
 *Week 05 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
+
+
+
+
+Week6 terraform ec2 basics · MD
+# Week 6 — Terraform + EC2 Basics
+ 
+**Status:** Complete
+**Environment:** Google Cloud Shell (pivoted from GitHub Codespaces mid-week)
+ 
+---
+ 
+## Environment Notes
+ 
+This week didn't start where the plan said it would. My AWS root account was suspended within a day of creating it — before I'd even added a payment method — and I don't currently have a card of my own or family access to one, so live deployment against AWS is on hold pending that getting sorted out.
+ 
+Rather than block the whole week on that, I moved everything else forward in Google Cloud Shell instead. Two things about that environment are worth documenting, because they cost me real debugging time and are the kind of thing worth knowing going in rather than discovering by accident:
+ 
+- **Cloud Shell containers don't run systemd.** Any command that goes through `systemctl` (start, enable, status) fails with `Failed to connect to bus: Host is down`. The fix is to use `service <name> start` or `apachectl start` instead — these talk to the process directly instead of through the init system.
+- **Only the home directory persists between sessions.** Anything installed system-wide via `apt-get` (Apache, in this case) has to be reinstalled every time a new session starts. Scripts, SSH keys, and repo files survive; installed packages don't. This actually turned out to be a decent stand-in lesson for how ephemeral environments behave in real CI/CD and container-based infra — write scripts assuming nothing persists except what you explicitly put in version control.
+---
+ 
+## chmod / chown
+ 
+Worked through octal notation on three test files, predicting the permission string before applying each one, then checked with `ls -l`.
+ 
+- `700` — owner full access, nothing for anyone else. Used this for scripts and anything with potential secrets in it.
+- `644` — standard default for non-sensitive files: owner read/write, everyone else read-only.
+- `600` — owner read/write only. Right call for config files, since they often hold credentials.
+The one correction worth noting: I initially assumed `755`/`555` meant "owner only" — they don't. `755` opens execute to everyone, just restricts write to the owner. `700` is the actual "nobody else can touch this at all" setting.
+ 
+---
+ 
+## Process Management
+ 
+Practiced `ps aux`, `top`, `htop`, and `kill` on a real (harmless) background process:
+ 
+```bash
+sleep 300 &
+ps aux | grep sleep
+kill [PID]
+```
+ 
+Also used this later as the basis for Incident 2 below, using `yes > /dev/null &` to simulate genuine CPU load instead of a passive sleeping process.
+ 
+---
+ 
+## Bash Scripts (5 total)
+ 
+All five written, made executable (`chmod 700`), and tested individually.
+ 
+- **`update_system.sh`** — runs `apt-get update && apt-get upgrade`.
+- **`install_apache.sh`** — installs Apache and starts it via `service` (not `systemctl`, for the reason above). Verified with `curl http://localhost` rather than trusting the install command's own "success" output.
+- **`create_user.sh`** — prompts for a username, creates the user with `useradd -m -s /bin/bash`, sets a password, confirms with `id`.
+- **`log_checker.sh`** — reads Apache's `access.log`, prints the last 10 entries, and counts 404s/500s with `grep | wc -l`.
+- **`port_scanner.sh`** — loops over a list of ports (22, 80, 443, 3306, 8080) and checks each with the `/dev/tcp` bash trick, correctly reporting 22 and 80 open and the rest closed.
+---
+ 
+## Terraform
+ 
+Installed Terraform (v1.9.8) manually into `~/bin` since it isn't preinstalled in Cloud Shell, and added it to `PATH` via `.bashrc`.
+ 
+Wrote `main.tf` defining a `t2.micro` EC2 instance under the AWS provider. Ran:
+ 
+```bash
+terraform init      # pulled the AWS provider plugin, created .terraform.lock.hcl
+terraform validate  # "Success! The configuration is valid."
+```
+ 
+`terraform apply` is intentionally not run yet — it needs working AWS credentials, which are blocked by the account suspension noted above. The config itself is validated and ready to deploy the moment that's resolved.
+ 
+---
+ 
+## Incident Queue
+ 
+Three simulated breaks this week, each worked the same way: break it → confirm the break from outside (not just trust the tool's own output) → check whether the process itself is even still alive → read the actual logs for the specific cause → fix that exact cause, not a symptom → re-verify externally.
+ 
+**Incident 1 — Wrong file permissions break Apache**
+`chmod 000` on `/var/www/html/index.html` (not the log file — that one didn't affect anything, since Apache had it open already). `curl` returned 403. `tail` on `error.log` showed a permission-denied error naming the file directly. Fixed with `chmod 644`, re-verified with `curl`.
+ 
+**Incident 2 — Runaway process consuming CPU**
+Started `yes > /dev/null &` as a stand-in for a real hung process. Found it with `ps aux --sort=-%cpu`, noted the PID, killed it, confirmed it was gone with a second `ps aux | grep`.
+ 
+**Incident 3 — Bash script fails silently**
+Wrote a backup script that ran `cp` into a directory that didn't exist yet, but printed "Backup complete." regardless of whether the copy actually succeeded. Confirmed the failure by checking the destination directory directly rather than trusting the script's message — it was empty. Rewrote the script to `mkdir -p` the destination first and wrap the `cp` in an `if/else` so it only reports success when the copy genuinely worked, and exits with an error code and a real message when it doesn't.
+ 
+---
+ 
+## Takeaway
+ 
+The most useful thing this week wasn't any single command — it was the incident loop itself: don't trust a tool's self-reported success, verify independently, check the process is alive before assuming the whole system is down, and go to the logs for the actual cause before attempting a fix. That loop is the same one used in a live incident with an unknown cause, just practiced here on ones I set up myself.
+ 
+*Week 06 of 12 — Cloud Security Self-Study Program*
+*Repository: cloud-security-portfolio*
