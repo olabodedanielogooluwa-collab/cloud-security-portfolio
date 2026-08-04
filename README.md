@@ -969,12 +969,16 @@ Three simulated breaks this week, each worked the same way: break it → confirm
  
 **Incident 1 — Wrong file permissions break Apache**
 `chmod 000` on `/var/www/html/index.html` (not the log file — that one didn't affect anything, since Apache had it open already). `curl` returned 403. `tail` on `error.log` showed a permission-denied error naming the file directly. Fixed with `chmod 644`, re-verified with `curl`.
- 
+ <img width="1080" height="311" alt="WhatsApp Image 2026-08-04 at 3 07 59 PM" src="https://github.com/user-attachments/assets/4b345bd6-da6f-4126-83d3-97a1f73d4984" />
+
 **Incident 2 — Runaway process consuming CPU**
 Started `yes > /dev/null &` as a stand-in for a real hung process. Found it with `ps aux --sort=-%cpu`, noted the PID, killed it, confirmed it was gone with a second `ps aux | grep`.
- 
+ <img width="1080" height="183" alt="WhatsApp Image 2026-08-04 at 3 09 37 PM" src="https://github.com/user-attachments/assets/4c2ae20b-a16e-4eae-bdbd-f565f7f15cdc" />
+
 **Incident 3 — Bash script fails silently**
-Wrote a backup script that ran `cp` into a directory that didn't exist yet, but printed "Backup complete." regardless of whether the copy actually succeeded. Confirmed the failure by checking the destination directory directly rather than trusting the script's message — it was empty. Rewrote the script to `mkdir -p` the destination first and wrap the `cp` in an `if/else` so it only reports success when the copy genuinely worked, and exits with an error code and a real message when it doesn't.
+Wrote a backup script that ran `cp` into a directory that didn't exist yet, but printed "Backup complete."<img width="1080" height="89" alt="WhatsApp Image 2026-08-04 at 3 12 04 PM" src="https://github.com/user-attachments/assets/4d3881e5-8dd0-4ec0-9aa0-57ca88a909d8" />
+
+regardless of whether the copy actually succeeded. Confirmed the failure by checking the destination directory directly rather than trusting the script's message — it was empty. Rewrote the script to `mkdir -p` the destination first and wrap the `cp` in an `if/else` so it only reports success when the copy genuinely worked, and exits with an error code and a real message when it doesn't.
  
 ---
  
