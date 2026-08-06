@@ -958,6 +958,8 @@ Wrote `main.tf` defining a `t2.micro` EC2 instance under the AWS provider. Ran:
 terraform init      # pulled the AWS provider plugin, created .terraform.lock.hcl
 terraform validate  # "Success! The configuration is valid."
 ```
+<img width="1080" height="607" alt="image" src="https://github.com/user-attachments/assets/95a8d4e0-ef3b-41e3-bb51-2b33197fc037" />
+
  
 `terraform apply` is intentionally not run yet — it needs working AWS credentials, which are blocked by the account suspension noted above. The config itself is validated and ready to deploy the moment that's resolved.
  
