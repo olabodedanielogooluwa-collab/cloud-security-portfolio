@@ -993,7 +993,7 @@ The most useful thing this week wasn't any single command — it was the inciden
 
 
 
-# AWS Account Setup & Terraform EC2 Deployment (week6/7)
+# AWS Account Setup & Terraform EC2 Deployment (week6-7)
 
 **Date:** August 8, 2026
 **Environment:** Google Cloud Shell (`~/week6-work`)
