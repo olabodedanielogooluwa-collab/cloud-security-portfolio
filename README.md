@@ -990,3 +990,75 @@ The most useful thing this week wasn't any single command — it was the inciden
  
 *Week 06 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
+
+
+
+# AWS Account Setup & Terraform EC2 Deployment (week6/7)
+
+**Date:** August 8, 2026
+**Environment:** Google Cloud Shell (`~/week6-work`)
+
+## Summary
+
+Original AWS root account was suspended shortly after signup, before a payment method was added, blocking the Week 6 Terraform deployment. Opened a fresh AWS account, resolved the blocker, and successfully deployed the EC2 instance defined in `main.tf`.
+
+## AWS Account Setup
+
+- Opened a new AWS account after the original root account was suspended pre-payment-method
+- Selected the **Free plan** (Nigeria billing) — no upfront charge, up to $200 in credits over 6 months
+- **Payment note:** Verve cards are not accepted by AWS; a Visa or Mastercard is required for account verification
+- Enabled **root account MFA** using an authenticator app (AWS enforces MFA for root within 35 days of account creation)
+- Configured a **zero-spend billing budget** alert to receive email notification of any charge above $0.01
+
+## IAM Setup
+
+- Created a dedicated IAM user (`terraform-cli`) with `AdministratorAccess`, rather than using root credentials for CLI/Terraform work — standard least-privilege practice for infrastructure tooling
+- Generated an access key pair (Access Key ID + Secret Access Key) for CLI authentication
+
+## Cloud Shell / AWS CLI Configuration
+
+- AWS CLI was not preinstalled in this Cloud Shell session; installed manually:
+  ```bash
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install
+  ```
+- Authenticated Cloud Shell to the AWS account:
+  ```bash
+  aws configure
+  ```
+- Verified identity:
+  ```bash
+  aws sts get-caller-identity
+  ```
+  Confirmed authentication as `arn:aws:iam::478769829434:user/terraform-cli`
+
+## Terraform Deployment Issue & Fix
+
+- Initial `terraform apply` failed with:
+  ```
+  InvalidParameterValue: The specified instance type is not eligible for Free Tier
+  ```
+- **Root cause:** AWS accounts created on or after July 15, 2025 have a different Free Tier eligible instance list than legacy accounts. `t2.micro` — the default used in most tutorials and in the original `main.tf` — is **not** eligible for new accounts.
+- **Free Tier eligible instance types for new accounts:** `t3.micro`, `t3.small`, `t4g.micro`, `t4g.small`, `c7i-flex.large`, `m7i-flex.large`
+- **Fix:** updated `main.tf`, changing:
+  ```hcl
+  instance_type = "t2.micro"
+  ```
+  to:
+  ```hcl
+  instance_type = "t3.micro"
+  ```
+
+## Deployment Result
+
+- Re-ran `terraform plan` to confirm the corrected instance type, then `terraform apply`
+- Deployment succeeded:
+  ```
+  aws_instance.week6_ec2: Creation complete after 14s [id=i-08e94c69d389f70ea]
+  Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+  ```
+
+## Key Takeaway
+
+The Free Tier eligible instance list depends on **AWS account creation date**, not just region. This is a common gap in existing tutorials/guides, most of which still default to `t2.micro`. Worth checking `aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true` before writing any `main.tf` for a new account going forward.
