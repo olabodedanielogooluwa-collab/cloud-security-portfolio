@@ -1,8 +1,29 @@
-# cloud-security-portfolio
-Hands-on cloud security projects | Networking | AWS | Terraform | security+
+# Cloud Security Portfolio
 
----
+Hands-on cloud security projects — networking, Linux administration, 
+SSH hardening, incident response, and AWS infrastructure via Terraform. 
+Self-directed 12-week program, building toward a Junior Cloud Security 
+Engineer role.
 
+Every entry follows the same loop: break something deliberately (or 
+find something already broken) → diagnose the root cause → fix it → 
+verify externally rather than trusting the tool's own success message.
+
+## Skills demonstrated
+- **Networking diagnostics** — tracert, ARP, DHCP, DNS, routing
+- **Linux administration** — permissions, processes, filesystem
+- **SSH hardening** — key auth, sshd_config, validation
+- **Incident response** — rogue devices, suspicious processes, misconfig recovery
+- **AWS / IaC** — Terraform EC2, IAM setup, Free Tier troubleshooting
+
+## Navigation
+- [Week 4 — Networking](#week-4--tracert-analysis)
+- [Week 5 — Linux & SSH](#week-5--file-navigation)
+- [Week 6 — Terraform + EC2](#week-6--terraform--ec2-basics)
+- [Week 6–7 — AWS Setup](#aws-account-setup--terraform-ec2-deployment-week6-7)
+- [Week 7 — AWS Core Services](#week-7--aws-core-services--billing-control)
+
+  
 ## Week 4 — Tracert Analysis
 **Command:** `tracert google.com`
 <img width="687" height="496" alt="WhatsApp Image 2026-07-14 at 3 40 29 PM" src="https://github.com/user-attachments/assets/efc9931e-79eb-433c-9a4a-c0063a6c4f5c" />
