@@ -1062,3 +1062,120 @@ Original AWS root account was suspended shortly after signup, before a payment m
 ## Key Takeaway
 
 The Free Tier eligible instance list depends on **AWS account creation date**, not just region. This is a common gap in existing tutorials/guides, most of which still default to `t2.micro`. Worth checking `aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true` before writing any `main.tf` for a new account going forward.
+
+
+# Week 7 — AWS Core Services + Billing Control
+
+## Overview
+This week focused on provisioning real AWS infrastructure through Terraform, securing it properly, and practicing incident response against live resources. Everything below was built, broken, diagnosed, and fixed on an active AWS account — not simulated.
+
+---
+
+**date:** August 15,2026
+
+---
+
+## Environment
+- **Working directory:** `~/week7-work` (Google Cloud Shell)
+- **IaC tool:** Terraform, AWS provider `~> 6.0` (with `tls` and `local` providers for key generation)
+- **Region:** `us-east-1`
+- **EC2 instance:** `t3.micro`, Amazon Linux 2023
+- **S3 bucket:** `week7-portfolio-olabodedaniel`
+- **Access:** AWS CLI configured locally (`~/.local/bin`, persisted across Cloud Shell sessions), SSH via generated key pair
+
+---
+
+## EC2 Deployment (Terraform)
+
+Deployed a live EC2 instance via Terraform, including:
+- Security group with scoped SSH access (restricted to my IP) and open HTTP (port 80)
+- Key pair generated through Terraform (`tls_private_key` + `aws_key_pair`), private key written locally with `0400` permissions
+- EC2 instance wired to both the security group and key pair
+- Apache installed and enabled via SSH, confirmed serving the default page at the instance's public IP
+
+**Issues hit along the way (and fixed):**
+- Duplicate `aws_instance` resource block from a bad paste — traced and removed
+- AWS provider version mismatch between `required_providers` and the version that had actually created the resource — resolved with `terraform init -upgrade`
+- Cloud Shell disk filled to 100% mid-deploy from repeated provider downloads — cleared with `du`/`rm`, redeployed cleanly
+- SSH key filename typo (`week7-keypem` vs `week7-key.pem`) — caught before wasting a cycle
+- Cloud Shell's public IP rotates between sessions, which repeatedly broke the SSH security group rule — learned to check `curl ifconfig.me` and update the rule whenever a connection times out unexpectedly
+
+**Result:** Live webpage served from EC2, fully provisioned via Terraform, goal met.
+
+---
+
+## S3 Bucket Setup (Terraform)
+
+Provisioned an S3 bucket with a security-first configuration:
+- Bucket created with `BucketOwnerEnforced` ownership controls (disables legacy ACLs entirely)
+- Test file uploaded via `aws_s3_object`
+- Bucket policy scoped to my AWS account root ARN only — no public access granted
+
+**Issues hit along the way (and fixed):**
+- Bucket policy JSON rejected by AWS twice — first for a lowercase `Aws` key instead of `AWS`, then for smart/curly quotes silently introduced by copy-paste, invisible in the terminal but invalid to AWS's JSON parser. Rebuilt the block using a direct heredoc (`cat >> file << EOF`) to guarantee clean ASCII characters.
+- Bucket policy `Principal` initially referenced a mistyped AWS account ID — corrected after cross-checking `aws sts get-caller-identity`
+
+**Result:** Bucket is private and correctly scoped — no public read/write access exists.
+
+---
+
+## Incident Queue
+
+### Incident 1: S3 Bucket Returns 403
+**Symptom:** Anonymous HTTPS request to the uploaded object returns 403 Forbidden.
+
+**Trace:**
+1. Verified bucket policy — access scoped to account root ARN only, no public principal.
+2. Verified Public Access Block settings — all four flags enabled (blocking public access at the bucket level regardless of policy content).
+3. Verified object ownership — `BucketOwnerEnforced`, ACLs disabled by design.
+
+**Root cause:** Expected behavior. The bucket is intentionally private; no public read access was ever configured.
+
+**Resolution:** No fix needed. Confirmed authenticated access succeeds (`aws s3 cp` using account credentials returns the file correctly), proving the policy works as intended for the authorized principal.
+
+**Decision:** Bucket stays private — reflects secure-by-default practice.
+
+---
+
+### Incident 2: EC2 Apache Not Reachable
+**Symptom:** Site fails to load; connection refused.
+
+**Trace:**
+1. Checked service status — journal showed a clean, deliberate stop (not a crash): "Stopping" → "Deactivated successfully" → "Stopped."
+2. Checked listening ports — nothing bound to port 80, consistent with Apache being down.
+3. Checked error logs — no crash traces. Only routine bot traffic probing for directory listing, correctly denied.
+
+**Root cause:** Apache service was manually stopped to simulate a real outage.
+
+**Resolution:** Restarted the service using `sudo systemctl...httpd`, confirmed `active (running)`, verified the page loads again externally.
+
+**Observation worth noting:** The logs also showed ongoing automated scanning traffic from external IPs — all correctly blocked. No misconfiguration, but a good reminder that a live server is public the moment it's up.
+
+---
+
+### Incident 3: Billing Alert Investigation
+**Symptom:** Simulated billing alert — investigate for unexpected charges.
+
+**Trace:**
+1. Checked running EC2 instances — one instance, t3.micro, free-tier eligible.
+2. Checked EBS volumes — one 8GB gp3 volume (instance root disk), within the 30GB/month free allowance.
+3. Checked Elastic IPs — none allocated, ruling out the common "unattached EIP billing hourly" trap.
+
+**Root cause:** No misconfiguration found. All active resources fall within AWS Free Tier limits.
+
+**Resolution:** No termination necessary. Investigation confirmed legitimate near-zero spend rather than assuming a problem existed and cutting resources unnecessarily.
+
+**Decision:** Resources remain running. This incident reinforced the diagnostic order for billing investigations — instances, then storage, then IPs — before taking any destructive action.
+
+---
+
+## Key Takeaways
+- Every incident this week followed the same discipline: reproduce the symptom, trace through the relevant layers in order, only then decide on a fix. Two of the three incidents concluded "this is working correctly" rather than "here's what I broke" — proving a system is healthy is as much a real skill as fixing one that isn't.
+- Most of the week's actual friction wasn't AWS concepts — it was environment mechanics: Cloud Shell's ephemeral IP and disk quota, invisible characters from copy-paste, and small typos. Learning to diagnose *those* systematically was arguably the bigger lesson than any single AWS service.
+- Terraform errors are almost always exactly what they say — duplicate resources, version mismatches, invalid syntax. Reading the error carefully before guessing at a fix saved more time than any shortcut would have.
+
+---
+
+## CLF-C02 Study
+- Completed FreeCodeCamp CLF-C02 video, hours 1-4
+- completed daily practice questions (20/day)
