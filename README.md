@@ -29,7 +29,7 @@ verify externally rather than trusting the tool's own success message.
 - [week-6/main.tf](./week-6/main.tf) — Terraform: EC2 instance (Week 6)
 - [week-6/week-6/scripts/update_system.sh](./week-6/week-6/scripts/update_system.sh)
 - [week-6/week-6/scripts/week-6/scripts/install_apache.sh](./week-6/week-6/scripts/week-6/scripts/install_apache.sh)
-- [week-6/scripts/log_checkers.sh]
+- [week-6/week-6/scripts/week-6/scripts/log_checker.sh](./week-6/week-6/scripts/week-6/scripts/log_checker.sh)
 - [week-6/week-6/scripts/week-6/scripts/create_user.sh](./week-6/week-6/scripts/week-6/scripts/create_user.sh)
 - [week-6/week-6/scripts/port_scanner.sh](./week-6/week-6/scripts/port_scanner.sh)
 
