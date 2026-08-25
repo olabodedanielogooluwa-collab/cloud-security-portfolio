@@ -23,15 +23,6 @@ verify externally rather than trusting the tool's own success message.
 - [Week 6–7 — AWS Setup](#aws-account-setup--terraform-ec2-deployment-week6-7)
 - [Week 7 — AWS Core Services](#week-7--aws-core-services--billing-control)
 
-## Code
-
-- [main.tf](./main.tf) — Terraform: EC2 instance, security group, key pair, S3 bucket + policy (Week 6–7)
-- [update_system.sh](./update_system.sh) — updates installed packages
-- [install_apache.sh](./install_apache.sh) — installs and enables Apache
-- [create_user.sh](./create_user.sh) — creates a new Linux user
-- [log_checker.sh](./log_checker.sh) — scans logs for errors/anomalies
-- [port_scanner.sh](./port_scanner.sh) — checks open/listening ports
-- [broken_script.sh](./broken_script.sh) — intentionally broken script (incident drill)
 
   
 ## Week 4 — Tracert Analysis
