@@ -35,8 +35,6 @@ verify externally rather than trusting the tool's own success message.
   
 ## Week 4 — Tracert Analysis
 **Command:** `tracert google.com`
-<img width="687" height="496" alt="WhatsApp Image 2026-07-14 at 3 40 29 PM" src="https://github.com/user-attachments/assets/efc9931e-79eb-433c-9a4a-c0063a6c4f5c" />
-
 
 
 **Findings:**
