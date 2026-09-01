@@ -22,6 +22,7 @@ verify externally rather than trusting the tool's own success message.
 - [Week 6 — Terraform + EC2](#week-6--terraform--ec2-basics)
 - [Week 6–7 — AWS Setup](#aws-account-setup--terraform-ec2-deployment-week6-7)
 - [Week 7 — AWS Core Services](#week-7--aws-core-services--billing-control)
+- [Week 8 — IAM + Access Control](week-8/README.md)
 
 ## Code
 
