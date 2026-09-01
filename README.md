@@ -27,17 +27,14 @@ verify externally rather than trusting the tool's own success message.
 
 - [week-7/main.tf](./week-7/main.tf) — Terraform: EC2, security group, key pair, S3 bucket + policy
 - [week-6/main.tf](./week-6/main.tf) — Terraform: EC2 instance (Week 6)
-- [week-6/week-6/scripts/update_system.sh](./week-6/week-6/scripts/update_system.sh)
-- [week-6/week-6/scripts/week-6/scripts/install_apache.sh](./week-6/week-6/scripts/week-6/scripts/install_apache.sh)
-- [week-6/week-6/scripts/week-6/scripts/log_checker.sh](./week-6/week-6/scripts/week-6/scripts/log_checker.sh)
-- [week-6/week-6/scripts/week-6/scripts/create_user.sh](./week-6/week-6/scripts/week-6/scripts/create_user.sh)
-- [week-6/week-6/scripts/port_scanner.sh](./week-6/week-6/scripts/port_scanner.sh)
-
+- [week-6/scripts/update_system.sh](./week-6/scripts/update_system.sh)
+- [week-6/scripts/install_apache.sh](./week-6/scripts/install_apache.sh)
+- [week-6/scripts/log_checker.sh](./week-6/scripts/log_checker.sh)
+- [week-6/scripts/create_user.sh](./week-6/scripts/create_user.sh)
+- [week-6/scripts/port_scanner.sh](./week-6/scripts/port_scanner.sh)
   
 ## Week 4 — Tracert Analysis
 **Command:** `tracert google.com`
-<img width="687" height="496" alt="WhatsApp Image 2026-07-14 at 3 40 29 PM" src="https://github.com/user-attachments/assets/efc9931e-79eb-433c-9a4a-c0063a6c4f5c" />
-
 
 
 **Findings:**
