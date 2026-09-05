@@ -100,34 +100,71 @@ publicly, even in a lab/training context.)*
 
 ---
 
+## 3. MFA: Root Status + Enforcement Policy for IAM Users
+ 
+**Root Account:** MFA was already configured on the root account via
+authenticator app during initial account setup (prior week). Confirmed
+active — no further action needed here.
+ 
+**IAM Users — Enforcement, Not Just Recommendation:**
+ 
+Rather than relying on users to voluntarily enable MFA, I wrote a policy
+that structurally denies access without it.
+ 
+**What I Did:**
+ 
+1. Authored `enforce-mfa-policy` — a policy using a `Deny` statement with
+   `NotAction` and a `BoolIfExists` condition on `aws:MultiFactorAuthPresent`
+2. The policy denies all actions **except** a small allow-list needed for a
+   user to self-service set up their own MFA device (otherwise a user
+   without MFA would be locked out entirely, with no path to fix it)
+3. Attached the policy to both the `developers` and `readonly` groups
+4. Ran `terraform plan` — confirmed `3 to add, 0 to change, 0 to destroy`
+   (new policy + two group attachments; no disruption to existing resources)
+5. Applied — 3 resources created successfully
+**Security Rationale:**
+ 
+- A policy is a stronger control than a written procedure or reminder —
+  it removes the option to skip MFA rather than just discouraging it
+- The `NotAction` allow-list is deliberately narrow: only what's needed to
+  view account info and enroll an MFA device — nothing else is exempted
+- `BoolIfExists` matters here: without it, the condition would fail (and
+  therefore not deny) for any session where the MFA key is entirely absent
+  from the request context, which would defeat the policy's purpose
+- **Known effect:** `dev-test-user` and `readonly-test-user` are now denied
+  nearly all actions until MFA is enrolled on their credentials. This is
+  intentional — it demonstrates the policy is actually enforcing, not just
+  present in the account
+---
+ 
 ## Credential & Identifier Handling
-
+ 
 In line with cloud security best practice, the following are intentionally
 excluded from this writeup and from version control:
-
+ 
 - AWS Account ID
 - S3 bucket names containing the account ID
 - Any access keys, secret keys, or session tokens
 - IAM ARNs in full (only the resource *type* and *policy logic* are shown)
-
 Terraform state and `.tfvars` files (if used) are excluded via `.gitignore`
 and are never committed to this repository.
-
+ 
 ---
-
+ 
 ## Status Against Week 8 Goals
-
+ 
 | Task | Status |
 |---|---|
 | IAM users, groups, roles via Terraform | ✅ Complete |
 | Least privilege applied + documented | ✅ Complete (S3 scoping) |
-| MFA on root and all users | ⏳ In progress |
+| MFA on root and all users | ✅ Complete |
 | CloudTrail enabled, logs reviewed | ⏳ Not started |
 | Over-permissioned user drill | ⏳ Not started |
 | 10 outreach messages | ⏳ Not started |
 | Incident queue (3) | ⏳ Not started |
-
+ 
 ---
-
+ 
 *Week 08 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
+
