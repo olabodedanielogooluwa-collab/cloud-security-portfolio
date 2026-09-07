@@ -136,6 +136,70 @@ that structurally denies access without it.
   intentional — it demonstrates the policy is actually enforcing, not just
   present in the account
 ---
+
+ ## 4. CloudTrail: Enable, Read, and Understand Logged Events
+ 
+**Objective:** Move from "logging exists" to "I can actually read and
+interpret what it captured." A trail that's never been read provides no
+real security value.
+ 
+**What I Did:**
+ 
+1. Created a dedicated S3 bucket for CloudTrail logs, separate from the
+   IAM-drill test bucket (log data and test/demo data should not share
+   storage)
+2. Attached a bucket policy allowing only the CloudTrail service principal
+   to check the bucket ACL and write objects — scoped to the exact log path
+   CloudTrail uses (`AWSLogs/<account-id>/*`)
+3. Created a trail (`week8-trail`) with:
+   - `is_multi_region_trail = true` — captures activity across all AWS
+     regions, not just one
+   - `include_global_service_events = true` — captures IAM and other
+     account-wide services correctly
+   - `enable_log_file_validation = true` — allows cryptographic
+     verification that log files haven't been altered after delivery
+4. Ran `terraform plan` / `apply` — 3 resources created, 0 errors
+5. Generated a real event (`aws iam list-users`), waited for delivery,
+   located the resulting log object in S3, downloaded it, and parsed the
+   JSON to read the actual event record
+**What a Log Record Contains:**
+ 
+Every CloudTrail event follows the same shape — who, what, when, where,
+and whether anything was changed:
+ 
+| Field | Purpose |
+|---|---|
+| `eventName` | The API action taken (e.g. `ListUsers`) |
+| `userIdentity` | Who performed it — user/role type and identifier |
+| `eventTime` | UTC timestamp of the call |
+| `sourceIPAddress` | Origin of the request |
+| `readOnly` | Whether the call changed anything or only viewed data |
+| `eventID` / `requestID` | Unique identifiers for tracing a specific call |
+ 
+**Finding:**
+ 
+Alongside my own action, the same log file also contained
+`GetBucketAcl` events where `userIdentity.type` was `AWSService` and
+`invokedBy` was `cloudtrail.amazonaws.com` — CloudTrail checking
+permissions on its own log bucket, not a human action. Distinguishing
+service-generated events from user-driven events is necessary before any
+real investigation, otherwise normal background activity gets mistaken
+for suspicious behavior.
+ 
+**Security Observation:**
+ 
+Terraform authenticates to AWS as its own dedicated IAM user
+(`terraform-cli`) rather than as my personal AWS identity. Separating an
+automation identity from a human identity is good practice — it means
+infrastructure changes are attributable to a specific, narrowly-scoped
+credential rather than a personal login, and that credential can be
+rotated or revoked independently.
+ 
+*(Access key IDs, the CloudTrail S3 bucket name, and the AWS account ID
+are redacted from this writeup for the same reason noted above — treated
+as sensitive identifiers even in a lab/training context.)*
+ 
+---
  
 ## Credential & Identifier Handling
  
@@ -158,7 +222,7 @@ and are never committed to this repository.
 | IAM users, groups, roles via Terraform | ✅ Complete |
 | Least privilege applied + documented | ✅ Complete (S3 scoping) |
 | MFA on root and all users | ✅ Complete |
-| CloudTrail enabled, logs reviewed | ⏳ Not started |
+| CloudTrail enabled, logs reviewed | ✅ Complete |
 | Over-permissioned user drill | ⏳ Not started |
 | 10 outreach messages | ⏳ Not started |
 | Incident queue (3) | ⏳ Not started |
@@ -167,4 +231,5 @@ and are never committed to this repository.
  
 *Week 08 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
+ 
 
