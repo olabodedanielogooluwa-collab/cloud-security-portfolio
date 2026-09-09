@@ -164,6 +164,7 @@ that turns "we think nothing happened" into "we can prove what happened."
 5. Generated a test event (`aws iam list-users`), waited for delivery,
    then pulled and read a log file directly from S3 to confirm the trail
    was actually capturing activity — not just reporting healthy in the console
+   
 **Reading a Real Log Entry:**
  
 Every CloudTrail event follows the same shape, answering five questions:
