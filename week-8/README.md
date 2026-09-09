@@ -137,68 +137,70 @@ that structurally denies access without it.
   present in the account
 ---
 
- ## 4. CloudTrail: Enable, Read, and Understand Logged Events
+ ## 4. CloudTrail: Visibility Into Every API Call
  
-**Objective:** Move from "logging exists" to "I can actually read and
-interpret what it captured." A trail that's never been read provides no
-real security value.
+**Why this matters (security first):** IAM policies define what *should*
+be possible. CloudTrail is what tells you what *actually happened* —
+every API call in the account, successful or denied, is recorded with who
+made it, from where, and when. Without it, a compromised credential or a
+misused root account leaves no trail to investigate. This is the control
+that turns "we think nothing happened" into "we can prove what happened."
  
 **What I Did:**
  
-1. Created a dedicated S3 bucket for CloudTrail logs, separate from the
-   IAM-drill test bucket (log data and test/demo data should not share
-   storage)
-2. Attached a bucket policy allowing only the CloudTrail service principal
-   to check the bucket ACL and write objects — scoped to the exact log path
-   CloudTrail uses (`AWSLogs/<account-id>/*`)
+1. Created a dedicated S3 bucket to hold CloudTrail logs, separate from
+   any test/working buckets — log data is treated as sensitive and is not
+   mixed with lab material
+2. Attached a bucket policy granting only the CloudTrail service
+   principal (`cloudtrail.amazonaws.com`) permission to check the bucket
+   ACL and write log objects — no IAM user or role has direct write access
 3. Created a trail (`week8-trail`) with:
-   - `is_multi_region_trail = true` — captures activity across all AWS
-     regions, not just one
-   - `include_global_service_events = true` — captures IAM and other
-     account-wide services correctly
-   - `enable_log_file_validation = true` — allows cryptographic
-     verification that log files haven't been altered after delivery
-4. Ran `terraform plan` / `apply` — 3 resources created, 0 errors
-5. Generated a real event (`aws iam list-users`), waited for delivery,
-   located the resulting log object in S3, downloaded it, and parsed the
-   JSON to read the actual event record
-**What a Log Record Contains:**
+   - `is_multi_region_trail = true` — captures activity across every AWS
+     region, not just the one I'm working in
+   - `enable_log_file_validation = true` — enables cryptographic hash
+     validation, so log files can be verified as untampered if they're
+     ever needed as evidence
+4. Applied via Terraform — 3 resources created (bucket, bucket policy, trail)
+5. Generated a test event (`aws iam list-users`), waited for delivery,
+   then pulled and read a log file directly from S3 to confirm the trail
+   was actually capturing activity — not just reporting healthy in the console
+**Reading a Real Log Entry:**
  
-Every CloudTrail event follows the same shape — who, what, when, where,
-and whether anything was changed:
+Every CloudTrail event follows the same shape, answering five questions:
  
-| Field | Purpose |
-|---|---|
-| `eventName` | The API action taken (e.g. `ListUsers`) |
-| `userIdentity` | Who performed it — user/role type and identifier |
-| `eventTime` | UTC timestamp of the call |
-| `sourceIPAddress` | Origin of the request |
-| `readOnly` | Whether the call changed anything or only viewed data |
-| `eventID` / `requestID` | Unique identifiers for tracing a specific call |
+| Question | Field | Example from this trail |
+|---|---|---|
+| Who | `userIdentity.userName` / `.type` | `terraform-cli` (IAMUser) |
+| What | `eventName` | `ListUsers` |
+| When | `eventTime` | `2026-09-06T15:44:24Z` (UTC) |
+| Where from | `sourceIPAddress` | Cloud Shell's egress IP |
+| Was it a change | `readOnly` | `true` — a read, not a modification |
  
-**Finding:**
+The same log file also contained two `GetBucketAcl` events where
+`userIdentity.type` was `AWSService` and `invokedBy` was
+`cloudtrail.amazonaws.com` — CloudTrail checking its own bucket
+permissions, not human activity. Distinguishing AWS-internal service
+events from user-driven events is a necessary first filter before
+investigating any real incident; otherwise background service noise gets
+mistaken for suspicious activity.
  
-Alongside my own action, the same log file also contained
-`GetBucketAcl` events where `userIdentity.type` was `AWSService` and
-`invokedBy` was `cloudtrail.amazonaws.com` — CloudTrail checking
-permissions on its own log bucket, not a human action. Distinguishing
-service-generated events from user-driven events is necessary before any
-real investigation, otherwise normal background activity gets mistaken
-for suspicious behavior.
+**Security Observations:**
  
-**Security Observation:**
- 
-Terraform authenticates to AWS as its own dedicated IAM user
-(`terraform-cli`) rather than as my personal AWS identity. Separating an
-automation identity from a human identity is good practice — it means
-infrastructure changes are attributable to a specific, narrowly-scoped
-credential rather than a personal login, and that credential can be
-rotated or revoked independently.
- 
-*(Access key IDs, the CloudTrail S3 bucket name, and the AWS account ID
-are redacted from this writeup for the same reason noted above — treated
-as sensitive identifiers even in a lab/training context.)*
- 
+- Only the CloudTrail service principal can write to the log bucket — no
+  IAM user, including root, has a policy granting direct write access to
+  it, which reduces the risk of logs being altered or deleted post-compromise
+- Multi-region logging closes a common blind spot: activity in an
+  unmonitored region is invisible without it, and that's exactly where an
+  attacker (or an accidental action) would be least likely to be noticed
+- Terraform authenticates through a dedicated IAM user (`terraform-cli`),
+  not a personal identity — separating "infrastructure automation"
+  from "human user" is good practice, and CloudTrail confirms that
+  separation is actually happening in practice, not just on paper
+- `force_destroy = true` on the log bucket is a **lab-only setting** to
+  allow teardown during this exercise. In a production environment, a
+  CloudTrail log bucket would be protected from deletion (e.g. via a
+  bucket policy deny statement or Object Lock) — flagged here so this
+  isn't mistaken for a production-ready default
 ---
  
 ## Credential & Identifier Handling
@@ -231,5 +233,4 @@ and are never committed to this repository.
  
 *Week 08 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
- 
 
