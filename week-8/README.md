@@ -218,6 +218,7 @@ excess, then verify.
 1. Deliberately attached an inline policy (`temp-overpermissioned-policy`)
    granting `Action = "*", Resource = "*"` — full administrative access —
    directly to `readonly-test-user`, a user meant to be view-only
+   
 2. **Audited before touching anything:**
 ```
    aws iam list-user-policies --user-name readonly-test-user
@@ -225,10 +226,12 @@ excess, then verify.
      --policy-name temp-overpermissioned-policy
 ```
    Confirmed the exact excess grant rather than assuming what was there
+   
 3. **Reduced to minimum:** removed the inline policy resource from
    Terraform entirely — `readonly-test-user` did not need a replacement
    policy, since its group membership (`ReadOnlyAccess` via the `readonly`
    group) already provides everything the role requires
+   
 4. Ran `terraform plan` / `apply` — confirmed exactly `1 to destroy, 0
    added, 0 changed`, meaning the fix removed only the excess grant and
    touched nothing else
