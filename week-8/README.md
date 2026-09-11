@@ -204,6 +204,50 @@ mistaken for suspicious activity.
   isn't mistaken for a production-ready default
 ---
  
+## 5. Drill: Over-Permissioned User → Audit → Reduce → Verify
+ 
+**Why this matters (security first):** Over-permissioning is rarely
+intentional — it accumulates from copy-pasted policies, "just to test
+something" grants that never get revoked, or broad defaults nobody
+revisited. This drill simulates finding that kind of excess and fixing it
+the way a real audit would: confirm what exists, remove exactly the
+excess, then verify.
+ 
+**What I Did:**
+ 
+1. Deliberately attached an inline policy (`temp-overpermissioned-policy`)
+   granting `Action = "*", Resource = "*"` — full administrative access —
+   directly to `readonly-test-user`, a user meant to be view-only
+2. **Audited before touching anything:**
+```
+   aws iam list-user-policies --user-name readonly-test-user
+   aws iam get-user-policy --user-name readonly-test-user \
+     --policy-name temp-overpermissioned-policy
+```
+   Confirmed the exact excess grant rather than assuming what was there
+3. **Reduced to minimum:** removed the inline policy resource from
+   Terraform entirely — `readonly-test-user` did not need a replacement
+   policy, since its group membership (`ReadOnlyAccess` via the `readonly`
+   group) already provides everything the role requires
+4. Ran `terraform plan` / `apply` — confirmed exactly `1 to destroy, 0
+   added, 0 changed`, meaning the fix removed only the excess grant and
+   touched nothing else
+ 
+**Security Observations:**
+ 
+- Inline user policies (attached directly to one user) are a common way
+  over-permissioning slips in unnoticed — they don't show up when
+  reviewing group policies, so an audit that only checks groups would
+  have missed this entirely
+- The fix required *removing* a policy, not writing a smaller one —
+  the correct level of access already existed at the group level. This
+  is a useful pattern to recognize: excess access is sometimes solved by
+  deletion, not rewriting
+- Verifying the Terraform plan showed only `1 to destroy` (not a
+  destroy/recreate of unrelated resources) confirmed the fix was surgical
+  — it didn't disturb the user's legitimate group-based access
+---
+ 
 ## Credential & Identifier Handling
  
 In line with cloud security best practice, the following are intentionally
@@ -226,12 +270,13 @@ and are never committed to this repository.
 | Least privilege applied + documented | ✅ Complete (S3 scoping) |
 | MFA on root and all users | ✅ Complete |
 | CloudTrail enabled, logs reviewed | ✅ Complete |
-| Over-permissioned user drill | ⏳ Not started |
+| Over-permissioned user drill | ✅ Complete |
 | 10 outreach messages | ⏳ Not started |
 | Incident queue (3) | ⏳ Not started |
  
 ---
  
 *Week 08 of 12 — Cloud Security Self-Study Program*
+*Repository: cloud-security-portfolio*
 *Repository: cloud-security-portfolio*
 
