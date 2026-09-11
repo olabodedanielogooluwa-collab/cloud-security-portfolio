@@ -232,8 +232,9 @@ excess, then verify.
    policy, since its group membership (`ReadOnlyAccess` via the `readonly`
    group) already provides everything the role requires
    
-4. Ran `terraform plan` / `apply` — confirmed exactly `1 to destroy, 0
-   added, 0 changed`, meaning the fix removed only the excess grant and
+4. Ran `terraform plan` / `apply` — confirmed exactly
+   <img width="1080" height="138" alt="Annotation 2026-09-10 005334" src="https://github.com/user-attachments/assets/4dae54f3-9bfc-4158-90ee-f06900edb822" />
+ meaning the fix removed only the excess grant and
    touched nothing else
  
 **Security Observations:**
