@@ -234,8 +234,7 @@ excess, then verify.
    
 4. Ran `terraform plan` / `apply` — confirmed exactly
    <img width="1080" height="138" alt="Annotation 2026-09-10 005334" src="https://github.com/user-attachments/assets/4dae54f3-9bfc-4158-90ee-f06900edb822" />
- meaning the fix removed only the excess grant and
-   touched nothing else
+ 
  
 **Security Observations:**
  
@@ -281,6 +280,5 @@ and are never committed to this repository.
 ---
  
 *Week 08 of 12 — Cloud Security Self-Study Program*
-*Repository: cloud-security-portfolio*
 *Repository: cloud-security-portfolio*
 
