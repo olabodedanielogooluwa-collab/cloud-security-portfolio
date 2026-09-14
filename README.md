@@ -25,7 +25,7 @@ verify externally rather than trusting the tool's own success message.
 - [Week 8 — IAM + Access Control](week-8/README.md)
 
 ## Code
-
+- [week-8/main.tf](week-8/main.tf) — Terraform: IAM users/groups/roles, least-privilege S3 policy, MFA enforcement, CloudTrail
 - [week-7/main.tf](./week-7/main.tf) — Terraform: EC2, security group, key pair, S3 bucket + policy
 - [week-6/main.tf](./week-6/main.tf) — Terraform: EC2 instance (Week 6)
 - [week-6/scripts/update_system.sh](./week-6/scripts/update_system.sh)
