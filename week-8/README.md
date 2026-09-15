@@ -251,6 +251,67 @@ excess, then verify.
   — it didn't disturb the user's legitimate group-based access
 ---
  
+## Incident Response Log
+ 
+Simulated incidents, investigated the way a real ticket would be worked —
+trace first, fix second, document the reasoning either way.
+ 
+### Incident 1 — IAM User AccessDenied on S3
+ 
+**Reported symptom:** `dev-test-user` receives `AccessDenied` attempting
+`s3:GetObject`.
+ 
+**Investigation:**
+ 
+Rather than guessing, I used the IAM Policy Simulator to test the actual
+permission evaluation for this user, against two targets — a bucket
+outside the user's intended scope, and the bucket the user's policy
+*should* allow:
+ 
+```
+aws iam simulate-principal-policy \
+  --policy-source-arn arn:aws:iam::<account-id>:user/dev-test-user \
+  --action-names s3:GetObject \
+  --resource-arns arn:aws:s3:::<cloudtrail-log-bucket>/somefile.json
+ 
+aws iam simulate-principal-policy \
+  --policy-source-arn arn:aws:iam::<account-id>:user/dev-test-user \
+  --action-names s3:GetObject \
+  --resource-arns arn:aws:s3:::<iam-drill-bucket>/somefile.json
+```
+ 
+**Finding:** Both simulations returned `explicitDeny` — but not from the
+S3 policy. Both were blocked by `enforce-mfa-policy` (the MFA-enforcement
+policy from Section 3). The simulator has no way to represent an
+MFA-authenticated session in a hypothetical request, so
+`aws:MultiFactorAuthPresent` is absent from the evaluation context.
+Because the policy uses `BoolIfExists`, an absent value is treated as
+`false`, and the deny-unless-MFA statement fires before the S3-specific
+allow/deny logic is ever reached.
+ 
+**Root cause:** Not a gap in the S3 policy at all — the denial originates
+entirely from the MFA enforcement layer. A user without an
+MFA-authenticated session is denied nearly every action, including ones
+their underlying S3 policy would otherwise permit.
+ 
+**Resolution:** No policy change required. The MFA enforcement policy is
+working as designed — the correct fix is for `dev-test-user` to
+authenticate with MFA, not to loosen any policy. Confirmed no unintended
+S3 permission gap exists once MFA is factored in.
+ 
+**Security Observation:**
+ 
+- This is a real troubleshooting trap worth documenting on its own: an
+  `AccessDenied` error can originate from a completely different policy
+  than the one that looks most relevant to the failing action. Tracing
+  the actual `MatchedStatements` in the simulator output — rather than
+  assuming the S3 policy was at fault — was the only way to find the true
+  cause
+- This also validates the MFA policy is actually restrictive in practice,
+  not just present on paper — it's intercepting requests exactly as
+  designed, even ones that would otherwise be legitimate
+---
+ 
 ## Credential & Identifier Handling
  
 In line with cloud security best practice, the following are intentionally
@@ -281,4 +342,5 @@ and are never committed to this repository.
  
 *Week 08 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
+ 
 
