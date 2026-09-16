@@ -312,6 +312,58 @@ S3 permission gap exists once MFA is factored in.
   designed, even ones that would otherwise be legitimate
 ---
  
+### Incident 2 — Root Account Used for an Action
+ 
+**Reported symptom:** Root account activity needs to be identified and
+evaluated — root should be reserved for a small set of tasks that
+cannot be performed by any other identity, and any root usage outside
+that list is worth investigating.
+ 
+**Investigation:**
+ 
+```
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=Username,AttributeValue=root \
+  --max-results 10
+```
+ 
+**Finding:** CloudTrail's Event history returned a real root-account
+event: `DescribeEventAggregates` against `health.amazonaws.com` (a
+read-only call to AWS's own service-health dashboard).
+ 
+Two details in the event's `userIdentity` block were essential to
+evaluating this correctly rather than treating it as a raw alarm:
+ 
+- `mfaAuthenticated: true` — the root session was MFA-protected
+- `sessionCredentialFromConsole: true` — this came from an interactive
+  browser login, not a raw access key
+**Root cause:** Root was used to check the AWS Health Dashboard —
+almost certainly a manual console check, not automation and not a
+misconfigured script defaulting to root.
+ 
+**Resolution:** No remediation needed for this specific event — it was
+MFA-protected and read-only. However, this is documented as a finding
+rather than dismissed, because of the underlying principle it tests:
+ 
+**Security Observation:**
+ 
+- Root should be used only for the small set of actions that genuinely
+  require it (e.g. closing the account, certain billing/support-plan
+  changes) — routine checks like a health dashboard should be done from
+  an IAM user or role instead, even when read-only and MFA-protected
+- The reason this matters even for a *safe* root action: root cannot be
+  restricted by IAM policy. Every guardrail built in this project this
+  week — least privilege, MFA enforcement — applies to IAM users and
+  roles, not to root. A habit of using root for convenience, even for
+  harmless actions, is what leaves an account exposed the one time it
+  matters
+- This is why CloudTrail's ability to answer "was root used, and under
+  what conditions" is a control in its own right, separate from whether
+  a specific root action turns out to be benign — the MFA and
+  console-login context in this event is what allowed a fast, confident
+  "not a compromise" conclusion instead of an open question
+---
+ 
 ## Credential & Identifier Handling
  
 In line with cloud security best practice, the following are intentionally
@@ -336,11 +388,10 @@ and are never committed to this repository.
 | CloudTrail enabled, logs reviewed | ✅ Complete |
 | Over-permissioned user drill | ✅ Complete |
 | 10 outreach messages | ⏳ Not started |
-| Incident queue (3) | ⏳ Not started |
+| Incident queue (2 of 3) | ⏳ In progress |
  
 ---
  
 *Week 08 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
- 
 
