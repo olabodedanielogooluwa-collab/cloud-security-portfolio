@@ -337,6 +337,7 @@ evaluating this correctly rather than treating it as a raw alarm:
 - `mfaAuthenticated: true` — the root session was MFA-protected
 - `sessionCredentialFromConsole: true` — this came from an interactive
   browser login, not a raw access key
+  
 **Root cause:** Root was used to check the AWS Health Dashboard —
 almost certainly a manual console check, not automation and not a
 misconfigured script defaulting to root.
