@@ -340,6 +340,7 @@ evaluating this correctly rather than treating it as a raw alarm:
 **Root cause:** Root was used to check the AWS Health Dashboard —
 almost certainly a manual console check, not automation and not a
 misconfigured script defaulting to root.
+
  
 **Resolution:** No remediation needed for this specific event — it was
 MFA-protected and read-only. However, this is documented as a finding
