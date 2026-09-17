@@ -1,4 +1,4 @@
-# Week 8 — IAM + Access Control + First Outreach
+# Week 8 — IAM + Access Control 
 
 **Status:** In progress
 **Environment:** AWS (Google Cloud Shell), Terraform
@@ -366,6 +366,64 @@ rather than dismissed, because of the underlying principle it tests:
   "not a compromise" conclusion instead of an open question
 ---
  
+### Incident 3 — Over-Permissioned Role Deployed
+ 
+**Reported symptom:** A policy grant is discovered that exceeds what the
+attached identity should have — the kind of finding that surfaces during
+a routine access review, not from a specific failure.
+ 
+**Investigation:**
+ 
+This incident reuses the audit performed in Section 5, framed here as an
+incident response rather than a planned drill. The deployed grant was
+an inline policy (`temp-overpermissioned-policy`) attached directly to
+`readonly-test-user`, granting `Action = "*", Resource = "*"` —
+unrestricted access, on an identity intended to be view-only.
+ 
+Before making any change, the existing grant was confirmed directly
+rather than assumed:
+ 
+```
+aws iam list-user-policies --user-name readonly-test-user
+aws iam get-user-policy --user-name readonly-test-user \
+  --policy-name temp-overpermissioned-policy
+```
+ 
+**Root cause:** An inline policy attached at the individual-user level,
+bypassing the group-based access model entirely. Because inline policies
+don't appear when reviewing group policies, this kind of grant is easy
+to miss unless users are audited individually, not just by group
+membership.
+ 
+**Resolution — audit, reduce, verify:**
+ 
+1. **Audit:** confirmed via the commands above that the grant was
+   exactly `Action = "*", Resource = "*"` — full administrative access
+2. **Reduce:** removed the inline policy resource from Terraform
+   entirely. No replacement policy was needed — `readonly-test-user`'s
+   group membership (`ReadOnlyAccess` via the `readonly` group) already
+   provides everything the role legitimately requires
+3. **Verify nothing breaks:** ran `terraform plan`, confirming exactly
+   `1 to destroy, 0 added, 0 changed` — proof the fix removed only the
+   excess grant and didn't disturb the user's legitimate group-based
+   permissions
+4. Applied the fix — destruction confirmed
+**Security Observation:**
+ 
+- The fix here was deletion, not rewriting a smaller policy — the
+  correct access level already existed at the group level, and the
+  inline policy was pure excess rather than a partially-correct grant
+  that needed narrowing
+- This incident is a reminder that access reviews need to check
+  individual users directly, not only the groups they belong to —
+  group-based access models reduce risk but don't eliminate the
+  possibility of an out-of-band grant slipping in underneath them
+- Confirming the Terraform plan's diff type before applying (`1 to
+  destroy` vs. a broader change) is what turns "I removed the bad
+  policy" into "I removed *only* the bad policy" — a distinction that
+  matters when documenting incident resolution
+---
+ 
 ## Credential & Identifier Handling
  
 In line with cloud security best practice, the following are intentionally
@@ -389,11 +447,11 @@ and are never committed to this repository.
 | MFA on root and all users | ✅ Complete |
 | CloudTrail enabled, logs reviewed | ✅ Complete |
 | Over-permissioned user drill | ✅ Complete |
-| 10 outreach messages | ⏳ Not started |
-| Incident queue (2 of 3) | ⏳ In progress |
+| Incident queue (3 of 3) | ✅ Complete |
  
 ---
  
 *Week 08 of 12 — Cloud Security Self-Study Program*
 *Repository: cloud-security-portfolio*
+ 
 
