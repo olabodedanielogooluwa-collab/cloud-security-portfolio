@@ -21,8 +21,10 @@ Built a full VPC from scratch using Terraform — public and private subnets, In
 
 **Takeaway:** NACLs are stateless — each direction needs its own explicit rule. Security Groups are stateful and don't have this failure mode, which is why this type of bug is NACL-specific.
 
-`[Insert Reachability Analyzer screenshot — before: Not reachable, NACL named]`
-`[Insert Reachability Analyzer screenshot — after: Reachable]`
+<img width="1080" height="606" alt="WhatsApp Image 2026-10-08 at 12 03 47 AM" src="https://github.com/user-attachments/assets/b74bf69e-b35c-426b-81b1-35a2f2f0ea92" />
+
+<img width="1080" height="606" alt="WhatsApp Image 2026-10-08 at 12 05 38 AM" src="https://github.com/user-attachments/assets/ce45ecec-f3a0-46e7-ac13-eb65d3102b79" />
+
 
 ## Incident 2 — One-Sided VPC Peering Route
 **Setup:** Two VPCs (`10.0.0.0/16` and `10.1.0.0/16`) peered via `aws_vpc_peering_connection`. Deliberately added the return route to only one VPC's route table, leaving the other with no route back.
@@ -35,8 +37,10 @@ Built a full VPC from scratch using Terraform — public and private subnets, In
 
 **Takeaway:** Peering requires independent route table entries on both sides. A connection that shows "active" tells you nothing about whether routing is actually complete — one missing entry breaks the whole connection, not just the reverse direction.
 
-`[Insert Reachability Analyzer screenshot — before: Not reachable, route table named]`
-`[Insert Reachability Analyzer screenshot — after: Reachable]`
+<img width="1080" height="606" alt="WhatsApp Image 2026-10-08 at 12 07 23 AM" src="https://github.com/user-attachments/assets/618c3012-0dcb-4491-bfbf-400b9adfdee3" />
+
+<img width="1080" height="606" alt="WhatsApp Image 2026-10-08 at 12 08 21 AM" src="https://github.com/user-attachments/assets/a62cdee2-f7df-447d-a9bb-84c77355041e" />
+
 
 ## Incident 3 — Database Instance in the Wrong Subnet
 **Setup:** An instance meant to be a private database was deployed with `subnet_id` pointed at the public subnet, paired with an intentionally open security group (port 3306 from `0.0.0.0/0`).
@@ -49,8 +53,9 @@ Built a full VPC from scratch using Terraform — public and private subnets, In
 
 **Takeaway:** Correct network placement alone neutralized the exposure, before the security group was ever fixed. Subnet placement is the first line of defense — a wide-open security group rule is a real problem to fix separately, but it can't be exploited from the internet if there's no route to the instance in the first place.
 
-`[Insert Reachability Analyzer screenshot — before: Reachable, open internet]`
-`[Insert Reachability Analyzer screenshot — after: Not reachable, UNASSOCIATED_COMPONENT]`
+<img width="1080" height="606" alt="WhatsApp Image 2026-10-08 at 12 09 33 AM" src="https://github.com/user-attachments/assets/bd623f1a-942b-492c-a133-2679a1447158" />
+
+<img width="1080" height="606" alt="WhatsApp Image 2026-10-08 at 12 03 47 AM" src="https://github.com/user-attachments/assets/608d8018-c623-4a21-8cce-d3e6e86cb5a2" />
 
 ## Tools Used
 - Terraform (VPC, subnets, route tables, IGW, NAT Gateway, peering, security groups, NACLs)
