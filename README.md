@@ -23,6 +23,7 @@ verify externally rather than trusting the tool's own success message.
 - [Week 6–7 — AWS Setup](#aws-account-setup--terraform-ec2-deployment-week6-7)
 - [Week 7 — AWS Core Services](#week-7--aws-core-services--billing-control)
 - [Week 8 — IAM + Access Control](week-8/README.md)
+- [Week 9](week-9/README.md)
 
 ## Code
 - [week-8/main.tf](week-8/main.tf) — Terraform: IAM users/groups/roles, least-privilege S3 policy, MFA enforcement, CloudTrail
