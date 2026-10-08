@@ -26,6 +26,7 @@ verify externally rather than trusting the tool's own success message.
 - [Week 9 - VPC Architecture + Incident Response](week-9/README.md)
 
 ## Code
+- [Week 9 code](week-9/)
 - [week-8/main.tf](week-8/main.tf) — Terraform: IAM users/groups/roles, least-privilege S3 policy, MFA enforcement, CloudTrail
 - [week-7/main.tf](./week-7/main.tf) — Terraform: EC2, security group, key pair, S3 bucket + policy
 - [week-6/main.tf](./week-6/main.tf) — Terraform: EC2 instance (Week 6)
