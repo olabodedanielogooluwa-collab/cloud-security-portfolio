@@ -1,6 +1,7 @@
 # Week 9 — VPC Architecture + Incident Response
 
 ## Overview
+![Project 03 architecture v1](project03-v1.png)
 Built a full VPC from scratch using Terraform — public and private subnets, Internet Gateway, NAT Gateway, and correct routing for each. Followed this with three isolated incident drills, each built, broken, diagnosed with AWS VPC Reachability Analyzer, fixed, and re-verified.
 
 ## Core Build
