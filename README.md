@@ -24,8 +24,10 @@ verify externally rather than trusting the tool's own success message.
 - [Week 7 — AWS Core Services](#week-7--aws-core-services--billing-control)
 - [Week 8 — IAM + Access Control](week-8/README.md)
 - [Week 9 - VPC Architecture + Incident Response](week-9/README.md)
+- [Week 10: Security Groups, NACLs + Threat Modelling](week-10/README.md)
 
 ## Code
+- [`week-10/sg/main.tf`](sg/main.tf)
 - [Week 9 code](week-9/)
 - [week-8/main.tf](week-8/main.tf) — Terraform: IAM users/groups/roles, least-privilege S3 policy, MFA enforcement, CloudTrail
 - [week-7/main.tf](./week-7/main.tf) — Terraform: EC2, security group, key pair, S3 bucket + policy
