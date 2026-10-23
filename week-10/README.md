@@ -62,4 +62,4 @@ aws ec2 describe-security-groups --filters Name=group-name,Values=wk10-*-sg \
 - The VPC is the account's default VPC, whose subnets are public by default. This widens the attack surface and will be addressed in the threat model.
 - The SSH `/32` breaks whenever my Cloud Shell IP rotates and must be refreshed before each use.
 
-**Code:** [`week-10/sg/main.tf`](sg/main.tf)
+**Code:** [`sg/`](sg/)
