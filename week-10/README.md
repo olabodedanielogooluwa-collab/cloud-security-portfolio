@@ -111,3 +111,48 @@ aws ec2 describe-security-groups --filters Name=group-name,Values=wk10-*-sg \
 - Outbound is still wide open at the Security Group layer.
 
 **Code:** [`nacl/`](nacl/)
+
+
+---
+
+## Step 3: boto3 Security Group audit + Incident 1 (SSH exposed to the internet)
+
+**Goal:** Automate detection of Security Group rules open to the internet, then use it to catch and fix a deliberate exposure.
+
+**Concept:**
+- boto3 is the AWS SDK for Python. It calls the same API as the CLI but returns structured data that can be looped over and tested.
+- The audit asks one question of every Security Group: does any inbound rule allow `0.0.0.0/0` or `::/0`?
+
+**What I built (`sg_audit.py`):**
+- Pages through every Security Group in the region
+- Flags inbound rules open to the internet and grades them
+  - CRITICAL: all traffic
+  - HIGH: a sensitive port in range (SSH, RDP, MySQL, PostgreSQL, MSSQL, Redis, MongoDB)
+  - MEDIUM: any other open port range
+- Treats 80 and 443 as expected public ports
+- Exits non-zero on CRITICAL or HIGH findings, so it can later run in a pipeline
+
+**Incident 1 drill:**
+1. **Baseline:** audit on the account returned 0 findings.
+2. **Break:** created a throwaway SG and opened port 22 to `0.0.0.0/0`.
+3. **Detect:** the audit reported `[HIGH] ... SSH (ports 22-22) open to 0.0.0.0/0`.
+4. **Fix:** revoked the open rule first, then added port 22 from a single `/32`. Removing before adding keeps the exposure window short.
+5. **Verify:** re-ran the audit and got 0 findings.
+6. **Clean up:** deleted the throwaway SG.
+
+**Risk documented:**
+- SSH open to the internet is scanned and brute-forced constantly by automated tools.
+- One weak credential or unpatched SSH flaw becomes full control of the instance.
+- The fix is a single-IP source, or better, no public SSH at all.
+
+**What went wrong:**
+- A pasted heredoc came out garbled in the terminal. I verified the file with `py_compile`, a line count and `tail` before trusting it, and it was intact.
+- The `$SG` shell variable was empty in a new session, so I reset it before running the revoke command. Variables do not survive between sessions.
+
+**Limits of the script (carried into the threat model):**
+- Checks inbound rules only, so wide-open egress is not flagged
+- Does not follow Security Group references, so a chain of SG-to-SG trust is invisible to it
+- Scans one region per run
+- Matches a fixed list of sensitive ports; an unusual port is graded MEDIUM
+
+**Code:** [`boto3/`](boto3/)
