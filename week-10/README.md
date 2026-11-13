@@ -156,3 +156,55 @@ aws ec2 describe-security-groups --filters Name=group-name,Values=wk10-*-sg \
 - Matches a fixed list of sensitive ports; an unusual port is graded MEDIUM
 
 **Code:** [`boto3/`](boto3/)
+
+
+---
+
+## Step 4: Attack simulation (testing my own firewall rules)
+
+**Goal:** Probe my own infrastructure from outside, compare real results to predictions, and test whether NACL rule order behaves as expected.
+
+**Scope and constraints:**
+- Target: only my own temporary test instance
+- Ports: 22, 80, 443, 8080, 3306; one connection attempt each, 3-second timeout, no flooding
+- Source: Cloud Shell, whose IP is not the one allowed by my SSH rules
+- Instance destroyed after the test
+
+**What I built (`port_probe.py`):** a small TCP probe that classifies each port.
+- Open: connected, so a service is listening
+- Refused: the packet passed every firewall, but nothing is listening
+- Filtered: the connection timed out, so a firewall dropped it silently
+- Ports can be passed on the command line, otherwise it uses the five defaults
+
+**Test 1: baseline (predicted before running)**
+
+| Port | Result | Reason |
+|---|---|---|
+| 22 | filtered | NACL and SG allow SSH only from one /32, and Cloud Shell is a different IP |
+| 80 | filtered | no rule in either layer |
+| 443 | refused | both layers allow it, but nothing listens |
+| 8080 | filtered | NACL allows 1024-65535, but the SG has no rule, so the SG drops it |
+| 3306 | filtered | same as 8080 |
+
+All five predictions matched.
+
+**Key lesson:** an answer, even a refusal, means the firewalls let the packet through. Silence means a firewall dropped it. This also showed the NACL's wide ephemeral range is not what protects 8080 and 3306; the Security Group is.
+
+**Test 2: NACL rule order**
+- Added inbound rule 90 (deny TCP 443) ahead of rule 100 (allow TCP 443).
+- Re-ran the probe: 443 changed from refused to filtered.
+- Why: a NACL evaluates from the lowest rule number upward and stops at the first match. The deny at 90 fires before the allow at 100 is ever reached, so the packet is dropped before it reaches the instance.
+- The allow rule still exists but is irrelevant. Rule order, not rule presence, decides the outcome.
+- Removed rule 90 afterwards and confirmed rules 100, 110, 120 remained.
+
+**What went wrong:**
+- My first explanation of the 443 change was wrong. I reasoned from "allowed and listening" instead of rule order, and I described the evaluation direction incorrectly. Corrected: lowest number first, first match wins.
+- My first attempt at making ports a command-line argument did not save. The test run showed all five default ports instead of two, which exposed it. I fixed it and re-verified.
+
+**Findings (carried into the threat model):**
+- Amazon Linux runs an SSH server by default, so the Security Group is the only thing keeping port 22 closed to the internet.
+- The NACL is permissive on high ports, so a mistake in the Security Group has no second layer behind it.
+- Rule order in a NACL is a change-control risk: one misplaced deny or allow silently changes behaviour.
+- Port probing shows what is reachable, not what is vulnerable.
+
+**Code:** [`attack-sim/`](attack-sim/)
