@@ -208,3 +208,51 @@ All five predictions matched.
 - Port probing shows what is reachable, not what is vulnerable.
 
 **Code:** [`attack-sim/`](attack-sim/)
+
+
+
+---
+
+
+## Step 5: CloudTrail investigation (Incident 3: unknown IP in the logs)
+
+**Goal:** Build a repeatable method to find every source IP in the account's activity, classify each one, and decide whether anything is a threat.
+
+**Triage framework (three questions per source):**
+1. Do I recognise the source?
+2. Is the action one I did or expected?
+3. Is anything failing, or touching identity (failed logins, root use, IAM or key changes)?
+
+An unknown source is only urgent when it combines with the third question.
+
+**What I built:**
+- `cloudtrail_ips.py`: groups 24 hours of CloudTrail events by source IP, with event count, error count, users and sample event names
+- `cloudtrail_errors.py`: lists failed events (source, event name, error code) for one region
+
+**Investigation:**
+- Three sources appeared:
+  - `cloudtrail.amazonaws.com` (about 400 events, 0 errors): CloudTrail checking the ACL on its own log bucket. AWS service, normal.
+  - A Google-range address (Cloud Shell) acting as my `terraform-cli` user, running a trail status check. Mine.
+  - `resource-explorer-2.amazonaws.com` (75 events, 11 errors): AWS Resource Explorer scanning the account. AWS service.
+- AWS services show up as service names, not IPs, and cannot be spoofed. A stolen key would show the attacker's real IP.
+- All 11 errors were `SubscriptionRequiredException` on read-only `List*` calls, meaning the account is not subscribed to those services (for example GuardDuty). No access-denied, identity, key or login activity.
+
+**Open item: Resource Explorer index in an unused region:**
+- Indexes existed in `us-east-1` and `eu-north-1`. I do not use `eu-north-1`.
+- CloudTrail's event history returned nothing for who created it. The index's creation date was about 99 days ago, past the 90-day lookup window, so the creator cannot be verified.
+- Likely benign: my console sometimes opens in `eu-north-1` before I switch regions, which fits a one-click setup. This is a hypothesis, not proof.
+- Action: deleted the `eu-north-1` index (confirmed `DELETED`) and set my console default region to `us-east-1`.
+
+**Verdict:** no unknown IP and no threat. Baseline established.
+
+**What went wrong:**
+- I first said an AWS source would be suspicious. Corrected: AWS service principals are normal background activity, and the real signal is an unfamiliar IP combined with failures or identity activity.
+- I pasted a placeholder (`<paste-ARN-here>`) into a command instead of the real value, which shell rejected with a syntax error. Fixed by capturing the ARN in a variable. Same class of mistake as the Step 1 VPC ID.
+- A script file was never created because its creation command was not run, so the run failed with "No such file". Fixed by creating the file and confirming it with `ls` before running.
+
+**Findings (carried into the threat model):**
+- No managed threat detection (GuardDuty) is enabled, so detection depends on manually reading logs.
+- CloudTrail event history only covers 90 days, so older activity cannot be investigated without a trail and log bucket.
+- A resource in an unused region could not be attributed. Region guardrails are a gap.
+
+**Code:** [`cloudtrail/`](cloudtrail/)
