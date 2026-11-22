@@ -274,4 +274,4 @@ An unknown source is only urgent when it combines with the third question.
 - Downgraded two findings from "observed" to "expected" or "consistent with", because I had not confirmed them directly.
 - Confirmed against the program plan that the structural fix belongs in the Project 03 VPC build (Weeks 11-12).
 
-**Output:** [`project-03-secure-vpc/threat-model.md`](../project-03-secure-vpc/threat-model.md)
+**Output:** [`project-03/threat-model.md`](../project-03/threat-model.md)
