@@ -239,7 +239,7 @@ An unknown source is only urgent when it combines with the third question.
 
 **Open item: Resource Explorer index in an unused region:**
 - Indexes existed in `us-east-1` and `eu-north-1`. I do not use `eu-north-1`.
-- CloudTrail's event history returned nothing for who created it. The index's creation date was about 99 days ago, past the 90-day lookup window, so the creator cannot be verified.
+- CloudTrail event-history lookups only cover 90 days. Older activity is only available from a trail's S3 logs, and those only go back to when the trail was created, so the creator of the unused-region index could not be verified.
 - Likely benign: my console sometimes opens in `eu-north-1` before I switch regions, which fits a one-click setup. This is a hypothesis, not proof.
 - Action: deleted the `eu-north-1` index (confirmed `DELETED`) and set my console default region to `us-east-1`.
 
@@ -256,3 +256,22 @@ An unknown source is only urgent when it combines with the third question.
 - A resource in an unused region could not be attributed. Region guardrails are a gap.
 
 **Code:** [`cloudtrail/`](cloudtrail/)
+
+
+---
+
+## Step 6: Threat model
+
+**Goal:** Turn the findings from Steps 1-5 into a ranked threat model.
+
+**What I did:**
+- Collected 11 findings, tagged each as observed, inferred or untested, and grouped them into four threats.
+- Wrote each threat as problem, constraint, decision and outcome.
+- Ranked them by residual risk after tested controls, and stated that method in the document.
+
+**What changed during review:**
+- Corrected an earlier claim: the 90-day limit applies to event-history lookups, not to a trail's S3 logs.
+- Downgraded two findings from "observed" to "expected" or "consistent with", because I had not confirmed them directly.
+- Confirmed against the program plan that the structural fix belongs in the Project 03 VPC build (Weeks 11-12).
+
+**Output:** [`project-03-secure-vpc/threat-model.md`](../project-03-secure-vpc/threat-model.md)
