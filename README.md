@@ -22,7 +22,7 @@ verify externally rather than trusting the tool's own success message.
 |---|---|---|
 | 01: Network Security Runbook | Diagnostic and threat identification skills | [Week 4 runbook](#week-4--tracert-analysis) |
 | 02: Terraform + Linux Automation | Infrastructure as code and scripting | [Week 6](#week-6--terraform--ec2-basics) · [Week 7](#week-7--aws-core-services--billing-control) |
-| 03: Secure VPC + Threat Model | Network design and security reasoning | [Threat model](project-03-secure-vpc/threat-model.md) |
+| 03: Secure VPC + Threat Model | Network design and security reasoning | [Project folder](project-03/) |
 
 ## Navigation
 - [Week 4 — Networking](#week-4--tracert-analysis)
