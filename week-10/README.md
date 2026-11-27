@@ -265,7 +265,7 @@ An unknown source is only urgent when it combines with the third question.
 **Goal:** Turn the findings from Steps 1-5 into a ranked threat model.
 
 **What I did:**
-- Collected 11 findings, tagged each as observed, inferred or untested, and grouped them into four threats.
+- Collected 11 findings from Steps 1-5 (a 12th was added after the Step 7 inventory), tagged each as observed, inferred or untested, and grouped them into four threats.
 - Wrote each threat as problem, constraint, decision and outcome.
 - Ranked them by residual risk after tested controls, and stated that method in the document.
 
