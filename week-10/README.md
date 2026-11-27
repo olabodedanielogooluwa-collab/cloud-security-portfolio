@@ -312,4 +312,10 @@ An unknown source is only urgent when it combines with the third question.
 **Habit adopted:** run a running-resources check (instances, NAT Gateways, Elastic IPs, volumes) at the end of every week.
 
 
+---
+
+**Status:** Week 10 complete. Steps 1-7 documented.
+**Next:** Week 11: NAT Gateway and private-subnet traffic, then finish the Project 03 Terraform code and README.
+
+
 
