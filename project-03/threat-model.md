@@ -36,6 +36,7 @@ Threats are ranked by **residual risk after the controls I actually tested**. T2
 | 9 | No managed threat detection | Step 5; `SubscriptionRequiredException` on a GuardDuty-style API | Consistent with, not confirmed |
 | 10 | Event-history lookups cover 90 days | Step 5; index creation date was outside the window | Observed |
 | 11 | Unattributable resource in an unused region | Step 5; index in a region I do not use | Observed |
+| 12 | Long-running public instance unnoticed for months | Step 7; Week 7 instance found by an inventory check | Observed |
 
 ## T2: Uncontrolled outbound traffic
 
@@ -63,7 +64,7 @@ Threats are ranked by **residual risk after the controls I actually tested**. T2
 
 ## T4: Detection and visibility gaps
 
-**Findings:** 9, 10, 11
+**Findings:** 9,10, 11, 12 
 **Problem:** Detection depends on me reading logs. No managed threat detection appears to be enabled, event-history lookups only reach back 90 days, and an index in a region I do not use could not be attributed to anyone because its creation was outside that window.
 **Constraint:** Managed detection and configuration recording bill by usage, which conflicts with a zero-spend account. A trail's S3 logs only exist from the day the trail was created.
 **Decision:** Investigate manually with the CloudTrail scripts for now. Deleted the unattributed index and set the console default region to us-east-1. Week 12 adds the automated CloudTrail and billing alarm. Enable managed detection only if the budget allows.
