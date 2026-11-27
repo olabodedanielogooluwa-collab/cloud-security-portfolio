@@ -275,3 +275,41 @@ An unknown source is only urgent when it combines with the third question.
 - Confirmed against the program plan that the structural fix belongs in the Project 03 VPC build (Weeks 11-12).
 
 **Output:** [`project-03/threat-model.md`](../project-03/threat-model.md)
+
+
+
+---
+
+## Step 7: Cost estimate
+
+**Goal:** Estimate what the running infrastructure costs, and find what dominates the bill.
+
+**What I found:**
+- An inventory check of running resources showed a forgotten instance from Week 7: a public Apache server, up since 9 August, with its 8 GB disk.
+- My earlier assumption that the account was near zero cost was wrong. The Week 10 destroys only targeted Week 10 resources.
+- Security Groups, NACLs, subnets and the Resource Explorer index are free. Compute, public IPv4 addresses and NAT Gateways are what cost money.
+
+**Estimate (AWS Pricing Calculator, us-east-1, 730 hours a month):**
+
+| Item | Monthly |
+|---|---|
+| EC2 t3.micro, On-Demand | $7.59 |
+| EBS gp3, 8 GB | $0.64 |
+| One public IPv4 address | $3.65 |
+| **Total** | **$11.88** |
+
+- The Week 9 core VPC estimate was about $40 a month ($32.85 for the NAT Gateway, $7.30 for two public IPv4 addresses), about 3.4 times higher.
+- Left running since 9 August, the Week 7 instance would have cost roughly $43 at list price. This is an estimate, and free-plan credits may have covered some of it.
+
+**Why these dominate:** an On-Demand instance and a NAT Gateway are both billed for every hour they exist, so an idle one costs the same as a busy one. In Week 9 the NAT Gateway was about 82% of the estimate. In this estimate the single public IPv4 address was the surprise at about 31% of the bill.
+
+**Decision:** Destroyed the Week 7 instance with a targeted `terraform destroy`, keeping the S3 bucket. The code and write-up in the repo rebuild it in minutes.
+
+**What went wrong:**
+- Destroy commands were scoped to each week, so a resource from an earlier week was never cleaned up.
+- Provider caches filled Cloud Shell's disk again. Removed the finished Week 9 `.terraform` folders to recover about 2 GB.
+
+**Habit adopted:** run a running-resources check (instances, NAT Gateways, Elastic IPs, volumes) at the end of every week.
+
+
+
