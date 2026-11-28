@@ -78,7 +78,7 @@ Threats are ranked by **residual risk after the controls I actually tested**. T2
 
 **Findings:** 9, 10, 11, 12
 
-**Problem:** Detection depends on me looking. No managed threat detection appears to be enabled, event-history lookups only reach back 90 days, and an index in a region I do not use could not be attributed to anyone because its creation was outside that window. A public instance from Week 7 also ran for about 110 days before a manual inventory check found it.
+**Problem:** Detection depends on me looking. No managed threat detection appears to be enabled, event-history lookups only reach back 90 days, and an index in a region I do not use could not be attributed to anyone because its creation was outside that window. A public instance from Week 7 also ran for about 110 days before a manual inventory check found it. Free-tier credits absorbed the charges, so no billing alert fired either.
 
 **Constraint:** Managed detection and configuration recording bill by usage, which conflicts with a zero-spend account. A trail's S3 logs only exist from the day the trail was created. I had no automated asset inventory and no habit of checking for leftovers.
 
