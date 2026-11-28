@@ -299,7 +299,7 @@ An unknown source is only urgent when it combines with the third question.
 | **Total** | **$11.88** |
 
 - The Week 9 core VPC estimate was about $40 a month ($32.85 for the NAT Gateway, $7.30 for two public IPv4 addresses), about 3.4 times higher.
-- Left running since 9 August, the Week 7 instance would have cost roughly $43 at list price. This is an estimate, and free-plan credits may have covered some of it.
+- Left running since 9 August, the Week 7 instance would have cost roughly $43 at list price. Free-tier credits absorbed the charges, so no bill or alert ever signalled it.
 
 **Why these dominate:** an On-Demand instance and a NAT Gateway are both billed for every hour they exist, so an idle one costs the same as a busy one. In Week 9 the NAT Gateway was about 82% of the estimate. In this estimate the single public IPv4 address was the surprise at about 31% of the bill.
 
